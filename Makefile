@@ -269,7 +269,7 @@ $(MMULIB_LHA): | $(DOWNLOAD_DIR)
 
 # Download and verify MuManual.lha
 $(MU_MANUAL_LHA): | $(DOWNLOAD_DIR)
-	@if [ -f "$@" ] && $(call verify_md5_cmd,$@,$(MMULIB_MD5)); then \
+	@if [ -f "$@" ] && $(call verify_md5_cmd,$@,$(MU_MANUAL_MD5)); then \
 		echo "$@ already downloaded and verified"; \
 	else \
 		echo "Downloading MuManual.lha..."; \
