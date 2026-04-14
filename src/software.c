@@ -312,10 +312,14 @@ void enumerate_mmu_entries(void)
                 {
                     size_t pos;
                     memset(buffer, 0, sizeof(buffer));
-                    pos = snprintf(buffer, sizeof(buffer), "%08lx-%08lx", mn->map_Lower, mn->map_Higher);
+                    pos = snprintf(buffer, sizeof(buffer), "%08lx-%08lx",
+                                   (unsigned long)mn->map_Lower,
+                                   (unsigned long)mn->map_Higher);
                     if (mn->map_Properties & MAPP_WINDOW)
                     {
-                        pos += snprintf(buffer + pos, sizeof(buffer) - pos, " Window %08lx", ((ULONG)mn->map_un.map_UserData));
+                        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                        " Window %08lx",
+                                        (unsigned long)mn->map_un.map_UserData);
                         /* All other flags do not care then */
                     }
                     else {
@@ -408,23 +412,34 @@ void enumerate_mmu_entries(void)
                         }
 
                         if (mn->map_Properties & MAPP_INVALID) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " INV %08lx", ((ULONG)mn->map_un.map_UserData));
+                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                            " INV %08lx",
+                                            (unsigned long)mn->map_un.map_UserData);
                         }
 
                         if (mn->map_Properties & MAPP_SWAPPED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " SW %08lx", ((ULONG)mn->map_un.map_UserData));
+                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                            " SW %08lx",
+                                            (unsigned long)mn->map_un.map_UserData);
                         }
 
                         if (mn->map_Properties & MAPP_REMAPPED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " MAP %08lx", ((ULONG)(mn->map_un.map_Delta + mn->map_Lower)));
+                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                            " MAP %08lx",
+                                            (unsigned long)(mn->map_un.map_Delta +
+                                                            mn->map_Lower));
                         }
 
                         if (mn->map_Properties & MAPP_BUNDLED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " BN %08lx", ((ULONG)mn->map_un.map_Page));
+                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                            " BN %08lx",
+                                            (unsigned long)mn->map_un.map_Page);
                         }
 
                         if (mn->map_Properties & MAPP_INDIRECT) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " IND %08lx", ((ULONG)mn->map_un.map_Descriptor));
+                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                                            " IND %08lx",
+                                            (unsigned long)mn->map_un.map_Descriptor);
                         }
                     }
                     entry = &mmu_list.entries[mmu_list.count];
