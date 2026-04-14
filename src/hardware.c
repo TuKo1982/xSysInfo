@@ -31,6 +31,7 @@
 #include "cpu.h" //for cpu-type/rev
 #include "cache.h"
 #include "benchmark.h" //for frequencies
+#include "berr_trap.h"
 
 /* Global hardware info */
 HardwareInfo hw_info;
@@ -722,6 +723,39 @@ void detect_clock(void)
             }
         }
     }
+    // On a stock A1000 the usual RTC page at $DC0000 is not decoded.
+    // A Spirit Insider 1000 maps an MK48T02 TimeKeeper with its clock
+    // registers on odd bytes at $DC0FF1..$DC0FFF.  Probe under bus-error
+    // protection so we don't crash on machines without the card.
+    // Only plain 68000 is supported here (VBR=0 and simple group-0 frame).
+    if (hw_info.gary_type == GARY_A1000 && hw_info.cpu_type == CPU_68000) {
+        UBYTE sec = 0, min = 0, hour = 0, day = 0, date = 0, mon = 0;
+        if (berr_probe_byte(0xDC0FF3, &sec) == 0 &&
+            berr_probe_byte(0xDC0FF5, &min) == 0 &&
+            berr_probe_byte(0xDC0FF7, &hour) == 0 &&
+            berr_probe_byte(0xDC0FF9, &day) == 0 &&
+            berr_probe_byte(0xDC0FFB, &date) == 0 &&
+            berr_probe_byte(0xDC0FFD, &mon) == 0) {
+            /* Validate BCD fields; reject floating bus ($FF) and
+             * obvious garbage.  Seconds ST bit (0x80) is masked off. */
+            UBYTE s = sec & 0x7F, m = min & 0x7F, h = hour & 0x3F;
+            UBYTE dw = day & 0x07, dt = date & 0x3F, mo = mon & 0x1F;
+            #define BCD_OK(v,lo,hi) \
+                (((v) & 0x0F) <= 9 && ((v) >> 4) <= 9 && \
+                 (((v) >> 4) * 10 + ((v) & 0x0F)) >= (lo) && \
+                 (((v) >> 4) * 10 + ((v) & 0x0F)) <= (hi))
+            if (BCD_OK(s, 0, 59) && BCD_OK(m, 0, 59) &&
+                BCD_OK(h, 0, 23) && dw >= 1 && dw <= 7 &&
+                BCD_OK(dt, 1, 31) && BCD_OK(mo, 1, 12)) {
+                hw_info.clock_type = CLOCK_MK48T02;
+                strncpy(hw_info.clock_string, get_string(MSG_MK48T02),
+                        sizeof(hw_info.clock_string) - 1);
+                return;
+            }
+            #undef BCD_OK
+        }
+    }
+
     // if we drop here, we found no clock
     hw_info.clock_type = CLOCK_NONE;
     strncpy(hw_info.clock_string, get_string(MSG_CLOCK_NOT_FOUND),

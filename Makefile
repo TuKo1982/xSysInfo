@@ -47,7 +47,7 @@ SRCS = src/main.c \
        src/print.c \
        src/locale.c
 
-ASM_SRCS = src/cpu.S
+ASM_SRCS = src/cpu.S src/berr_trap.S
 
 OBJS = $(SRCS:.c=.o)
 

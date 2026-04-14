@@ -270,6 +270,7 @@ static const char *default_strings[MSG_COUNT] = {
     /*MSG_SDMAC*/           "SDMAC",
     /*MSG_MSM6242B*/        "OKI MSM6242B",
     /*MSG_RP5C01A*/         "RICOH RP5C01A",
+    /*MSG_MK48T02*/         "ST MK48T02",
     /*MSG_SOUND_SYSTEM*/    "Sound",
     /*MSG_PAULA_UNKNOWN*/   "Unknown Paula",
     /*MSG_PAULA_ORIG*/      "Paula 8364",

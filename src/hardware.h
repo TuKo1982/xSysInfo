@@ -151,6 +151,7 @@ typedef enum {
     CLOCK_RP5C01,       /* A4000 style (Ricoh) */
     CLOCK_MSM6242,      /* A1200 style (OKI) */
     CLOCK_RF5C01,
+    CLOCK_MK48T02,      /* Insider 1000 style (ST/Mostek TimeKeeper) */
     CLOCK_UNKNOWN
 } ClockType;
 
