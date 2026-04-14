@@ -44,8 +44,12 @@ const char *get_memory_type_string(UWORD attrs, APTR addr)
     /* Check for specific memory regions */
     if (attrs & MEMF_CHIP) {
         pos = snprintf(buffer, sizeof(buffer), "CHIP RAM");
-    } else if (address >= 0xC00000 && address < 0xD80000) {
-        /* Ranger/Slow RAM area */
+    } else if (address >= 0xC00000 && address < 0xD80000 &&
+               hw_info.gary_type != GARY_A1000) {
+        /* Ranger/Slow RAM area. Skip on A1000: there is no motherboard
+         * Ranger option, so memory in this window must be coming over
+         * the CPU expansion (e.g. Spirit Inboard 1000) and is actually
+         * CPU-side fast RAM. */
         pos = snprintf(buffer, sizeof(buffer), "SLOW RAM");
     } else if (attrs & MEMF_FAST) {
         if (address < 0x01000000) {
