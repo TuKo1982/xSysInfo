@@ -51,7 +51,7 @@ ASM_SRCS = src/cpu.S src/berr_trap.S
 
 OBJS = $(SRCS:.c=.o)
 
-ASM_OBJS = $(ASM_SRCS:.S=.hunk)
+ASM_OBJS = $(ASM_SRCS:.S=.o)
 
 TARGET = xSysInfo
 
@@ -137,11 +137,11 @@ $(TARGET): $(OBJS) $(ASM_OBJS)
 	@$(STRIP) $@
 	@wc -c < "$@" | awk '{printf "$@ successfully compiled (%s bytes)\n", $$1}'
 
-src/%.o: src/%.c src/xsysinfo.h
+$(OBJS): src/%.o: src/%.c src/xsysinfo.h
 	@echo "  CC    $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
-src/%.hunk: src/%.S
+$(ASM_OBJS): src/%.o: src/%.S
 	@echo "  ASM   $@"
 	@$(VASM) $(ASMFLAGS) -o $@ $<
 
