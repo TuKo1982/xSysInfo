@@ -414,21 +414,43 @@ static void query_drive_details(void)
 
 /*
  * Helper: Check SCSI direct support for all drives
+ *
+ * Probes each unique (handler, unit) tuple at most once.  Multiple DH:
+ * partitions on the same physical unit would otherwise cause repeated
+ * probes against the same device, which has been observed to stall
+ * shared SCSI controllers (see issue #13).
  */
 static void check_scsi_support_all(void)
 {
-    ULONG i;
+    ULONG i, j;
 
     for (i = 0; i < drive_list.count; i++) {
         DriveInfo *drive = &drive_list.drives[i];
+        BOOL cached = FALSE;
 
         if (!drive->handler_name[0]) continue;
 
-        drive->scsi_supported = check_scsi_direct_support(
-            drive->handler_name, drive->unit_number);
-        debug("  drives: SCSI support for %s: %s\n",
+        /* Reuse an earlier probe for the same handler+unit. */
+        for (j = 0; j < i; j++) {
+            DriveInfo *prev = &drive_list.drives[j];
+            if (!prev->handler_name[0]) continue;
+            if (prev->unit_number != drive->unit_number) continue;
+            if (strcmp(prev->handler_name, drive->handler_name) != 0) continue;
+            drive->scsi_supported = prev->scsi_supported;
+            cached = TRUE;
+            break;
+        }
+
+        if (!cached) {
+            drive->scsi_supported = check_scsi_direct_support(
+                drive->handler_name, drive->unit_number);
+        }
+
+        debug("  drives: SCSI support for %s unit %lu: %s%s\n",
               (LONG)drive->handler_name,
-              (LONG)(drive->scsi_supported ? get_string(MSG_YES) : get_string(MSG_NO)));
+              (ULONG)drive->unit_number,
+              (LONG)(drive->scsi_supported ? get_string(MSG_YES) : get_string(MSG_NO)),
+              (LONG)(cached ? " (cached)" : ""));
     }
 }
 

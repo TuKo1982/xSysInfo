@@ -153,6 +153,8 @@ BOOL check_scsi_direct_support(const char *handler_name, ULONG unit_number)
     BOOL supports_scsi = FALSE;
     struct SCSICmd scsi_cmd;
     UBYTE cmd[6];
+    UBYTE inquiry_buf[36];
+    UBYTE sense_data[20];
 
     BYTE error;
 
@@ -183,12 +185,22 @@ BOOL check_scsi_direct_support(const char *handler_name, ULONG unit_number)
     }
 
     memset(&scsi_cmd, 0, sizeof(struct SCSICmd));
-    memset(cmd, 0, sizeof(cmd)); // TEST UNIT READY
+    memset(cmd, 0, sizeof(cmd));
+    memset(inquiry_buf, 0, sizeof(inquiry_buf));
+    memset(sense_data, 0, sizeof(sense_data));
+
+    /* INQUIRY — always responds regardless of media state, avoiding
+     * hangs on empty removable drives (e.g. CD-ROM without a disc). */
+    cmd[0] = 0x12;                  /* INQUIRY opcode */
+    cmd[4] = sizeof(inquiry_buf);   /* Allocation length */
 
     scsi_cmd.scsi_Command = cmd;
     scsi_cmd.scsi_CmdLength = sizeof(cmd);
-    scsi_cmd.scsi_Length = 0;
-    scsi_cmd.scsi_Flags = SCSIF_READ;
+    scsi_cmd.scsi_Data = (UWORD *)inquiry_buf;
+    scsi_cmd.scsi_Length = sizeof(inquiry_buf);
+    scsi_cmd.scsi_Flags = SCSIF_READ | SCSIF_AUTOSENSE;
+    scsi_cmd.scsi_SenseData = sense_data;
+    scsi_cmd.scsi_SenseLength = sizeof(sense_data);
 
     /* Try HD_SCSICMD first */
     io->io_Command = HD_SCSICMD;
