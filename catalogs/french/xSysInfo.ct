@@ -5,6 +5,8 @@
 ; French translation for xSysInfo
 ; Translator:
 ;
+; Header strings
+;
 MSG_TAGLINE
 Un programme d'information systeme Amiga
 ;
@@ -17,7 +19,7 @@ MSG_SYSTEM_SOFTWARE
 LOGICIELS SYSTEME INSTALLES
 ;
 MSG_INTERNAL_HARDWARE
-MODES MATERIELS INTERNES
+INFORMATIONS MATERIELLES
 ;
 MSG_SPEED_COMPARISONS
 COMPARAISONS DE VITESSE
@@ -44,6 +46,9 @@ PERIPHERIQUES
 ;
 MSG_RESOURCES
 RESSOURCES
+;
+MSG_MMU_ENTRIES
+SCAN MMU
 ;
 ; Scale toggle
 ;
@@ -119,6 +124,9 @@ DBurst
 ;
 MSG_CBACK
 CBack
+;
+MSG_SUPER_SCALAR
+SuperS/BranchC/StoreB
 ;
 ; Speed comparison labels
 ;
@@ -402,7 +410,7 @@ MSG_32BIT_RAM
 32BIT RAM
 ;
 MSG_MEM_SPEED_HEADER
-CHIP  FAST  ROM   VITESSE
+CHIP  FAST  ROM
 ;
 ; SCSI Types
 ;
@@ -532,6 +540,15 @@ Impossible d'ouvrir la fenetre
 ;
 ; Comments based on system speed
 ;
+MSG_COMMENT_WARP11
+WARP 11!
+;
+MSG_COMMENT_LUDICROUS
+Vitesse folle!
+;
+MSG_COMMENT_RIDICULUS
+Vitesse ridicule!
+;
 MSG_COMMENT_BLAZING
 Foudoyant!
 ;
@@ -549,3 +566,207 @@ Amiga classique
 ;
 MSG_COMMENT_DEFAULT
 Que dire!
+;
+; Hardware toggle
+;
+MSG_HARDWARE_STD
+NORMAL
+;
+MSG_HARDWARE_EXT
+ETENDU
+;
+MSG_RAMSEY_CTRL
+Controle Ramsey
+;
+MSG_SDMAC_REV
+Puce SCSI
+;
+MSG_RAMSEY_PAGE
+Mode page
+;
+MSG_RAMSEY_BURST
+Burst
+;
+MSG_RAMSEY_WRAP
+Wrap
+;
+MSG_RAMSEY_SIZE
+Taille RAM
+;
+MSG_RAMSEY_SKIP
+Skip
+;
+MSG_RAMSEY_REFRESH
+Rafraich.
+;
+MSG_1M
+Puces 1M
+;
+MSG_256K
+Puces 256K
+;
+MSG_GARY_A1000
+A1000
+;
+MSG_GARY_A500
+GARY
+;
+MSG_GAYLE
+GAYLE
+;
+MSG_FAT_GARY
+FAT GARY
+;
+MSG_GARY_UNKNOWN
+INCONNU
+;
+MSG_EXT_INFO
+Infos etendues A3000/4000
+;
+MSG_NV_RAM
+NV-RAM (BattMem):
+;
+MSG_AMNESIA
+Amnesie
+;
+MSG_SHARED_AMNESIA
+Amn. part.
+;
+MSG_TIMEOUT
+Timeout
+;
+MSG_SCAN_LUN
+Scan LUNs
+;
+MSG_SYNC_TRANS
+Sync
+;
+MSG_FAST_SYNC
+Sync rapide
+;
+MSG_QUEUING
+File d'attente
+;
+MSG_SCSI_HOST_ID
+SCSI_ID
+;
+MSG_LONG
+LONG
+;
+MSG_SHORT
+COURT
+;
+MSG_NCR_53C710
+NCR 53C710
+;
+MSG_SDMAC
+SDMAC
+;
+MSG_MSM6242B
+OKI MSM6242B
+;
+MSG_RP5C01A
+RICOH RP5C01A
+;
+MSG_MK48T02
+ST MK48T02
+;
+MSG_SOUND_SYSTEM
+Son
+;
+MSG_PAULA_UNKNOWN
+Paula inconnue
+;
+MSG_PAULA_ORIG
+Paula 8364
+;
+MSG_PAULA_SAGA
+SAGA Paula
+;
+MSG_DENISE_OCS
+Denise 8362 (OCS)
+;
+MSG_DENISE_ECS
+Denise 8373 (ECS)
+;
+MSG_DENISE_LISA
+Lisa 4203
+;
+MSG_DENISE_SAGA
+SAGA
+;
+MSG_DENISE_UNKNOWN
+Denise inconnue
+;
+MSG_AGNUS_ALICE_PAL
+Alice 8374
+;
+MSG_AGNUS_ALICE_NTSC
+Alice 8374
+;
+MSG_AGNUS_ECS_2MB_PAL
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_2MB_NTSC
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_B_PAL
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_B_NTSC
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_PAL
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_ECS_NTSC
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_OCS_FAT_PAL
+FatAgnus 8371 (OCS)
+;
+MSG_AGNUS_OCS_FAT_NTSC
+FatAgnus 8370 (OCS)
+;
+MSG_AGNUS_OCS_PAL
+Agnus 8367 (OCS)
+;
+MSG_AGNUS_OCS_NTSC
+Agnus 8361 (OCS)
+;
+MSG_AGNUS_SAGA
+Agnus SAGA
+;
+MSG_AGNUS_UNKNOWN
+Agnus inconnu
+;
+MSG_UNCERTAIN
+incertain
+;
+MSG_MMU_SIZE
+Taille page MMU
+;
+MSG_MMU_ADDRESS_HINT
+Adresses en hex!
+;
+MSG_MMU_FLAGS1_HINT
+WP=Prot.ecr. U=Util. M=Mod. G=Global
+;
+MSG_MMU_FLAGS2_HINT
+TT=Traduit UPx=PageUserX CI=CacheInhibit
+;
+MSG_MMU_FLAGS3_HINT
+IM=Imprecis NS=non-serial CB=CopyBack
+;
+MSG_MMU_FLAGS4_HINT
+SO=Superv. BL=Vide SH=Partage INV=Invalide
+;
+MSG_MMU_FLAGS5_HINT
+SNG=Page seule RP=Reparable IO=EspaceIO
+;
+MSG_MMU_FLAGS6_HINT
+Ux=UserX SW=Swappe MAP=Remappe BN=Groupe
+;
+MSG_MMU_FLAGS7_HINT
+IND=Indirect +=autres flags
+;

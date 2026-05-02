@@ -5,6 +5,8 @@
 ; Polish translation for xSysInfo
 ; Translator:
 ;
+; Header strings
+;
 MSG_TAGLINE
 Program informacji systemowej Amigi
 ;
@@ -17,7 +19,7 @@ MSG_SYSTEM_SOFTWARE
 ZAINSTALOWANE OPROGRAMOWANIE
 ;
 MSG_INTERNAL_HARDWARE
-WEWNETRZNE TRYBY SPRZETOWE
+INFORMACJE O SPRZECIE
 ;
 MSG_SPEED_COMPARISONS
 POROWNANIA SZYBKOSCI
@@ -44,6 +46,9 @@ URZADZENIA
 ;
 MSG_RESOURCES
 ZASOBY
+;
+MSG_MMU_ENTRIES
+SKAN MMU
 ;
 ; Scale toggle
 ;
@@ -119,6 +124,9 @@ DBurst
 ;
 MSG_CBACK
 CBack
+;
+MSG_SUPER_SCALAR
+SuperS/BranchC/StoreB
 ;
 ; Speed comparison labels
 ;
@@ -402,7 +410,7 @@ MSG_32BIT_RAM
 32BIT RAM
 ;
 MSG_MEM_SPEED_HEADER
-CHIP  FAST  ROM   TEMPO
+CHIP  FAST  ROM
 ;
 ; SCSI Types
 ;
@@ -532,6 +540,15 @@ Nie mozna otworzyc okna
 ;
 ; Comments based on system speed
 ;
+MSG_COMMENT_WARP11
+WARP 11!
+;
+MSG_COMMENT_LUDICROUS
+Szalona szybkosc!
+;
+MSG_COMMENT_RIDICULUS
+Absurdalna szybkosc!
+;
 MSG_COMMENT_BLAZING
 Blyskawiczny!
 ;
@@ -549,3 +566,207 @@ Klasyczna Amiga
 ;
 MSG_COMMENT_DEFAULT
 Co tu powiedziec!
+;
+; Hardware toggle
+;
+MSG_HARDWARE_STD
+NORMALNY
+;
+MSG_HARDWARE_EXT
+ROZSZERZONY
+;
+MSG_RAMSEY_CTRL
+Kontrola Ramsey
+;
+MSG_SDMAC_REV
+Uklad SCSI
+;
+MSG_RAMSEY_PAGE
+Tryb strony
+;
+MSG_RAMSEY_BURST
+Burst
+;
+MSG_RAMSEY_WRAP
+Wrap
+;
+MSG_RAMSEY_SIZE
+Rozmiar RAM
+;
+MSG_RAMSEY_SKIP
+Skip
+;
+MSG_RAMSEY_REFRESH
+Odswiezanie
+;
+MSG_1M
+Kosci 1M
+;
+MSG_256K
+Kosci 256K
+;
+MSG_GARY_A1000
+A1000
+;
+MSG_GARY_A500
+GARY
+;
+MSG_GAYLE
+GAYLE
+;
+MSG_FAT_GARY
+FAT GARY
+;
+MSG_GARY_UNKNOWN
+NIEZNANY
+;
+MSG_EXT_INFO
+Rozsz. info A3000/4000
+;
+MSG_NV_RAM
+NV-RAM (BattMem):
+;
+MSG_AMNESIA
+Amnezja
+;
+MSG_SHARED_AMNESIA
+Wspolna amn.
+;
+MSG_TIMEOUT
+Limit czasu
+;
+MSG_SCAN_LUN
+Skan LUN
+;
+MSG_SYNC_TRANS
+Sync
+;
+MSG_FAST_SYNC
+Fast Sync
+;
+MSG_QUEUING
+Kolejkowanie
+;
+MSG_SCSI_HOST_ID
+SCSI_ID
+;
+MSG_LONG
+DLUGI
+;
+MSG_SHORT
+KROTKI
+;
+MSG_NCR_53C710
+NCR 53C710
+;
+MSG_SDMAC
+SDMAC
+;
+MSG_MSM6242B
+OKI MSM6242B
+;
+MSG_RP5C01A
+RICOH RP5C01A
+;
+MSG_MK48T02
+ST MK48T02
+;
+MSG_SOUND_SYSTEM
+Dzwiek
+;
+MSG_PAULA_UNKNOWN
+Nieznana Paula
+;
+MSG_PAULA_ORIG
+Paula 8364
+;
+MSG_PAULA_SAGA
+SAGA Paula
+;
+MSG_DENISE_OCS
+Denise 8362 (OCS)
+;
+MSG_DENISE_ECS
+Denise 8373 (ECS)
+;
+MSG_DENISE_LISA
+Lisa 4203
+;
+MSG_DENISE_SAGA
+SAGA
+;
+MSG_DENISE_UNKNOWN
+Nieznana Denise
+;
+MSG_AGNUS_ALICE_PAL
+Alice 8374
+;
+MSG_AGNUS_ALICE_NTSC
+Alice 8374
+;
+MSG_AGNUS_ECS_2MB_PAL
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_2MB_NTSC
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_B_PAL
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_B_NTSC
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_PAL
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_ECS_NTSC
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_OCS_FAT_PAL
+FatAgnus 8371 (OCS)
+;
+MSG_AGNUS_OCS_FAT_NTSC
+FatAgnus 8370 (OCS)
+;
+MSG_AGNUS_OCS_PAL
+Agnus 8367 (OCS)
+;
+MSG_AGNUS_OCS_NTSC
+Agnus 8361 (OCS)
+;
+MSG_AGNUS_SAGA
+Agnus SAGA
+;
+MSG_AGNUS_UNKNOWN
+Nieznany Agnus
+;
+MSG_UNCERTAIN
+niepewne
+;
+MSG_MMU_SIZE
+Rozmiar strony MMU
+;
+MSG_MMU_ADDRESS_HINT
+Adresy w hex!
+;
+MSG_MMU_FLAGS1_HINT
+WP=Ochr.zap. U=Uzyte M=Zmodyf. G=Globalne
+;
+MSG_MMU_FLAGS2_HINT
+TT=Przetl. UPx=StrUserX CI=CacheInhibit
+;
+MSG_MMU_FLAGS3_HINT
+IM=Niedokl. NS=nieser. CB=CopyBack
+;
+MSG_MMU_FLAGS4_HINT
+SO=Supervisor BL=Puste SH=Wspolne INV=Niepraw.
+;
+MSG_MMU_FLAGS5_HINT
+SNG=Jedna str. RP=Napraw. IO=PrzestrzIO
+;
+MSG_MMU_FLAGS6_HINT
+Ux=UserX SW=Swap MAP=Mapowane BN=Bundled
+;
+MSG_MMU_FLAGS7_HINT
+IND=Posrednie +=wiecej flag
+;

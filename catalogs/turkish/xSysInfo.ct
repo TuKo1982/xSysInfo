@@ -5,6 +5,8 @@
 ; Turkish translation for xSysInfo
 ; Translator:
 ;
+; Header strings
+;
 MSG_TAGLINE
 Bir Amiga Sistem Bilgi Programi
 ;
@@ -17,7 +19,7 @@ MSG_SYSTEM_SOFTWARE
 YUKLU SISTEM YAZILIMI
 ;
 MSG_INTERNAL_HARDWARE
-DAHILI DONANIM MODLARI
+DONANIM BILGISI
 ;
 MSG_SPEED_COMPARISONS
 HIZ KARSILASTIRMALARI
@@ -44,6 +46,9 @@ AYGITLAR
 ;
 MSG_RESOURCES
 KAYNAKLAR
+;
+MSG_MMU_ENTRIES
+MMU TARAMA
 ;
 ; Scale toggle
 ;
@@ -119,6 +124,9 @@ DBurst
 ;
 MSG_CBACK
 CBack
+;
+MSG_SUPER_SCALAR
+SuperS/BranchC/StoreB
 ;
 ; Speed comparison labels
 ;
@@ -402,7 +410,7 @@ MSG_32BIT_RAM
 32BIT RAM
 ;
 MSG_MEM_SPEED_HEADER
-CHIP  FAST  ROM   HIZ
+CHIP  FAST  ROM
 ;
 ; SCSI Types
 ;
@@ -532,6 +540,15 @@ Pencere acilamadi
 ;
 ; Comments based on system speed
 ;
+MSG_COMMENT_WARP11
+WARP 11!
+;
+MSG_COMMENT_LUDICROUS
+Cilgin hiz!
+;
+MSG_COMMENT_RIDICULUS
+Gulunc hiz!
+;
 MSG_COMMENT_BLAZING
 Inanilmaz hizli!
 ;
@@ -549,3 +566,207 @@ Klasik Amiga
 ;
 MSG_COMMENT_DEFAULT
 Ne diyebilirim ki!
+;
+; Hardware toggle
+;
+MSG_HARDWARE_STD
+NORMAL
+;
+MSG_HARDWARE_EXT
+GENISLETILMIS
+;
+MSG_RAMSEY_CTRL
+Ramsey kontrolu
+;
+MSG_SDMAC_REV
+SCSI yongasi
+;
+MSG_RAMSEY_PAGE
+Sayfa modu
+;
+MSG_RAMSEY_BURST
+Burst
+;
+MSG_RAMSEY_WRAP
+Wrap
+;
+MSG_RAMSEY_SIZE
+RAM boyutu
+;
+MSG_RAMSEY_SKIP
+Atla
+;
+MSG_RAMSEY_REFRESH
+Yenileme
+;
+MSG_1M
+1M yongalar
+;
+MSG_256K
+256K yongalar
+;
+MSG_GARY_A1000
+A1000
+;
+MSG_GARY_A500
+GARY
+;
+MSG_GAYLE
+GAYLE
+;
+MSG_FAT_GARY
+FAT GARY
+;
+MSG_GARY_UNKNOWN
+BILINMIYOR
+;
+MSG_EXT_INFO
+A3000/4000 icin ek bilgi
+;
+MSG_NV_RAM
+NV-RAM (BattMem):
+;
+MSG_AMNESIA
+Amnezi
+;
+MSG_SHARED_AMNESIA
+Paylasimli amn.
+;
+MSG_TIMEOUT
+Zaman asimi
+;
+MSG_SCAN_LUN
+LUN tara
+;
+MSG_SYNC_TRANS
+Sync
+;
+MSG_FAST_SYNC
+Fast Sync
+;
+MSG_QUEUING
+Kuyruklama
+;
+MSG_SCSI_HOST_ID
+SCSI_ID
+;
+MSG_LONG
+UZUN
+;
+MSG_SHORT
+KISA
+;
+MSG_NCR_53C710
+NCR 53C710
+;
+MSG_SDMAC
+SDMAC
+;
+MSG_MSM6242B
+OKI MSM6242B
+;
+MSG_RP5C01A
+RICOH RP5C01A
+;
+MSG_MK48T02
+ST MK48T02
+;
+MSG_SOUND_SYSTEM
+Ses
+;
+MSG_PAULA_UNKNOWN
+Bilinmeyen Paula
+;
+MSG_PAULA_ORIG
+Paula 8364
+;
+MSG_PAULA_SAGA
+SAGA Paula
+;
+MSG_DENISE_OCS
+Denise 8362 (OCS)
+;
+MSG_DENISE_ECS
+Denise 8373 (ECS)
+;
+MSG_DENISE_LISA
+Lisa 4203
+;
+MSG_DENISE_SAGA
+SAGA
+;
+MSG_DENISE_UNKNOWN
+Bilinmeyen Denise
+;
+MSG_AGNUS_ALICE_PAL
+Alice 8374
+;
+MSG_AGNUS_ALICE_NTSC
+Alice 8374
+;
+MSG_AGNUS_ECS_2MB_PAL
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_2MB_NTSC
+FatAgnus 8375/72B (ECS)
+;
+MSG_AGNUS_ECS_B_PAL
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_B_NTSC
+FatAgnus 8372B/75 (ECS)
+;
+MSG_AGNUS_ECS_PAL
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_ECS_NTSC
+FatAgnus 8372 (ECS)
+;
+MSG_AGNUS_OCS_FAT_PAL
+FatAgnus 8371 (OCS)
+;
+MSG_AGNUS_OCS_FAT_NTSC
+FatAgnus 8370 (OCS)
+;
+MSG_AGNUS_OCS_PAL
+Agnus 8367 (OCS)
+;
+MSG_AGNUS_OCS_NTSC
+Agnus 8361 (OCS)
+;
+MSG_AGNUS_SAGA
+Agnus SAGA
+;
+MSG_AGNUS_UNKNOWN
+Bilinmeyen Agnus
+;
+MSG_UNCERTAIN
+belirsiz
+;
+MSG_MMU_SIZE
+MMU sayfa boyutu
+;
+MSG_MMU_ADDRESS_HINT
+Adresler hex!
+;
+MSG_MMU_FLAGS1_HINT
+WP=Yaz.Kor. U=Kullan. M=Degisti G=Global
+;
+MSG_MMU_FLAGS2_HINT
+TT=Cevrildi UPx=UserPageX CI=CacheInhibit
+;
+MSG_MMU_FLAGS3_HINT
+IM=Belirsiz NS=seri degil CB=CopyBack
+;
+MSG_MMU_FLAGS4_HINT
+SO=Supervisor BL=Bos SH=Paylasim INV=Gecersiz
+;
+MSG_MMU_FLAGS5_HINT
+SNG=Tek sayfa RP=Onarilir IO=IO alani
+;
+MSG_MMU_FLAGS6_HINT
+Ux=UserX SW=Takas MAP=YenidenMap BN=Paket
+;
+MSG_MMU_FLAGS7_HINT
+IND=Dolayli +=daha fazla bayrak
+;
