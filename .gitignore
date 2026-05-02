@@ -2,11 +2,12 @@
 attic/
 catalogs/build/
 downloads/
+3rdparty/mmu/reference/
 xSysInfo
 xsysinfo.adf
 xsysinfo-*.adf
 xsysinfo-*.lha
-TinySetPatch
+/TinySetPatch
 
 /src/*.hunk
 /extern/

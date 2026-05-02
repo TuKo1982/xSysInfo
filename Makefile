@@ -48,6 +48,7 @@ SRCS = src/main.c \
        src/locale.c
 
 ASM_SRCS = src/cpu.S src/berr_trap.S
+TINYSETPATCH_SRC = 3rdparty/TinySetPatch/TinySetPatch.S
 
 OBJS = $(SRCS:.c=.o)
 
@@ -345,7 +346,7 @@ download-libs: $(IDENTIFY_USR_LHA) $(IDENTIFY_PCI_LHA) $(OPENPCI_LHA) $(MMULIB_L
 
 
 
-TinySetPatch: src/TinySetPatch.S
+TinySetPatch: $(TINYSETPATCH_SRC)
 	@echo "  VASM $@"
 	@$(VASM) -quiet -Fhunkexe -m68020up -o $@ -nosym $< -I $(NDK_PATH)
 
