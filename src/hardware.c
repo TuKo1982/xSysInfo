@@ -219,7 +219,8 @@ void detect_cpu(void)
             }
             else
             {
-                snprintf(hw_info.cpu_string, sizeof(hw_info.cpu_string), get_string(MSG_UNKNOWN));
+                snprintf(hw_info.cpu_string, sizeof(hw_info.cpu_string), "%s",
+                         get_string(MSG_UNKNOWN));
                 hw_info.cpu_type = CPU_UNKNOWN;
             }
         }
@@ -238,7 +239,8 @@ void detect_cpu(void)
     }
     else {
         hw_info.cpu_rev = -1;
-        snprintf(hw_info.cpu_revision, sizeof(hw_info.cpu_revision), get_string(MSG_NA));
+        snprintf(hw_info.cpu_revision, sizeof(hw_info.cpu_revision), "%s",
+                 get_string(MSG_NA));
     }
 }
 
