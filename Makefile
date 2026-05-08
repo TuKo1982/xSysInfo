@@ -24,10 +24,12 @@ CFLAGS = -O2 -m68000 -mtune=68020-60 -Wa,-m68881 -msoft-float -noixemul -Wall -W
          -I$(IDENTIFY_INC) \
          -I$(MMU_INC) \
          -DXSYSINFO_DATE="\"$(ADATE)\"" -DXSYSINFO_VERSION="\"$(FULL_VERSION)\"" \
-         -DPROG_VERSION=$(PROG_VERSION) -DPROG_REVISION=$(PROG_REVISION) \
-		 # -mcrt=nix13
+         -DPROG_VERSION=$(PROG_VERSION) -DPROG_REVISION=$(PROG_REVISION)
+
 ASMFLAGS = -Fhunk -esc -sc -m68020up -I $(NDK_PATH)
-LDFLAGS = -noixemul
+# Select the Kick 1.3-safe libnix runtime.  This keeps the no-ixemul build
+# while avoiding libnix20 helpers that auto-open utility.library.
+LDFLAGS = -mcrt=nix13
 LIBS = -lamiga -lgcc
 
 # Source files
