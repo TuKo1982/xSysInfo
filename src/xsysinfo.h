@@ -28,6 +28,19 @@
 
 #include <graphics/text.h>
 
+static inline void copy_string(char *dest, const char *src, size_t destsize)
+{
+    if (!dest || destsize == 0) return;
+
+    if (!src) src = "";
+
+    while (destsize > 1 && *src) {
+        *dest++ = *src++;
+        destsize--;
+    }
+    *dest = '\0';
+}
+
 /* Default font settings */
 #define DEFAULT_FONT_NAME   "topaz.font"
 #define DEFAULT_FONT_HEIGHT 8

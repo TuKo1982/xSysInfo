@@ -309,8 +309,8 @@ void detect_fpu(void)
 
     //is there any fpu?
     if ((attnFlags & ((UWORD)AFF_68881|(UWORD)AFF_FPU40)) == 0) { //No FPU
-        strncpy(hw_info.fpu_string, get_string(MSG_NONE),
-                    sizeof(hw_info.fpu_string) - 1);
+        copy_string(hw_info.fpu_string, get_string(MSG_NONE),
+                    sizeof(hw_info.fpu_string));
         hw_info.fpu_type = FPU_NONE;
         if (hw_info.cpu_type == CPU_68040) {
             hw_info.cpu_type = CPU_68LC040; //fpu-less cpu
@@ -365,7 +365,8 @@ void detect_mmu(void)
     // default
     hw_info.mmu_enabled = FALSE;
     hw_info.mmu_type = MMU_NONE;
-    strncpy(hw_info.mmu_string, get_string(MSG_NA), sizeof(hw_info.mmu_string) - 1);
+    copy_string(hw_info.mmu_string, get_string(MSG_NA),
+                sizeof(hw_info.mmu_string));
 
     // first: try mmu.lib
     if ((MMUBase = (struct Library *)OpenLibrary((CONST_STRPTR)"mmu.library", 40L)))
@@ -375,22 +376,26 @@ void detect_mmu(void)
             {
             case MUTYPE_68851:
                 hw_info.mmu_type = MMU_68851;
-                strncpy(hw_info.mmu_string, "68851", sizeof(hw_info.mmu_string) - 1);
+                copy_string(hw_info.mmu_string, "68851",
+                            sizeof(hw_info.mmu_string));
                 hw_info.mmu_enabled = TRUE;
                 break;
             case MUTYPE_68030:
                 hw_info.mmu_type = MMU_68030;
-                strncpy(hw_info.mmu_string, "68030", sizeof(hw_info.mmu_string) - 1);
+                copy_string(hw_info.mmu_string, "68030",
+                            sizeof(hw_info.mmu_string));
                 hw_info.mmu_enabled = TRUE;
                 break;
             case MUTYPE_68040:
                 hw_info.mmu_type = MMU_68040;
-                strncpy(hw_info.mmu_string, "68040", sizeof(hw_info.mmu_string) - 1);
+                copy_string(hw_info.mmu_string, "68040",
+                            sizeof(hw_info.mmu_string));
                 hw_info.mmu_enabled = TRUE;
                 break;
             case MUTYPE_68060:
                 hw_info.mmu_type = MMU_68060;
-                strncpy(hw_info.mmu_string, "68060", sizeof(hw_info.mmu_string) - 1);
+                copy_string(hw_info.mmu_string, "68060",
+                            sizeof(hw_info.mmu_string));
                 hw_info.mmu_enabled = TRUE;
                 break;
             case MUTYPE_NONE:
@@ -416,7 +421,8 @@ void detect_mmu(void)
                     break;
                 default:
                     hw_info.mmu_type = MMU_NONE;
-                    strncpy(hw_info.mmu_string, get_string(MSG_NA), sizeof(hw_info.mmu_string) - 1);
+                    copy_string(hw_info.mmu_string, get_string(MSG_NA),
+                                sizeof(hw_info.mmu_string));
                     break;
                 }
                 break;
@@ -496,7 +502,8 @@ void detect_mmu(void)
                 hw_info.mmu_type = MMU_68060;
                 break;
             default:
-                strncpy(hw_info.mmu_string, get_string(MSG_UNKNOWN), sizeof(hw_info.mmu_string) - 1);
+                copy_string(hw_info.mmu_string, get_string(MSG_UNKNOWN),
+                            sizeof(hw_info.mmu_string));
                 hw_info.mmu_type = MMU_UNKNOWN;
                 break;
             }
@@ -688,14 +695,14 @@ void detect_clock(void)
         val &= RTC_MASK;
         if (val == 0b0100) {
             hw_info.clock_type = CLOCK_MSM6242;
-            strncpy(hw_info.clock_string, get_string(MSG_MSM6242B),
-                        sizeof(hw_info.clock_string) - 1);
+            copy_string(hw_info.clock_string, get_string(MSG_MSM6242B),
+                        sizeof(hw_info.clock_string));
             return;
         }
         if (val > 0) { //when val is not 0 we have no RTC!
             hw_info.clock_type = CLOCK_NONE;
-            strncpy(hw_info.clock_string, get_string(MSG_CLOCK_NOT_FOUND),
-                    sizeof(hw_info.clock_string) - 1);
+            copy_string(hw_info.clock_string, get_string(MSG_CLOCK_NOT_FOUND),
+                        sizeof(hw_info.clock_string));
             return;
         }
         val = *((volatile unsigned char *)(RTC_BASE+RTC_REG_D));
@@ -716,8 +723,8 @@ void detect_clock(void)
                 val &= RTC_MASK;
                 if (val ==1 ) { // bingo! RP5C01A
                     hw_info.clock_type = CLOCK_RP5C01;
-                    strncpy(hw_info.clock_string, get_string(MSG_RP5C01A),
-                        sizeof(hw_info.clock_string) - 1);
+                    copy_string(hw_info.clock_string, get_string(MSG_RP5C01A),
+                                sizeof(hw_info.clock_string));
                     return;
                 }
             }
@@ -748,8 +755,8 @@ void detect_clock(void)
                 BCD_OK(h, 0, 23) && dw >= 1 && dw <= 7 &&
                 BCD_OK(dt, 1, 31) && BCD_OK(mo, 1, 12)) {
                 hw_info.clock_type = CLOCK_MK48T02;
-                strncpy(hw_info.clock_string, get_string(MSG_MK48T02),
-                        sizeof(hw_info.clock_string) - 1);
+                copy_string(hw_info.clock_string, get_string(MSG_MK48T02),
+                            sizeof(hw_info.clock_string));
                 return;
             }
             #undef BCD_OK
@@ -758,8 +765,8 @@ void detect_clock(void)
 
     // if we drop here, we found no clock
     hw_info.clock_type = CLOCK_NONE;
-    strncpy(hw_info.clock_string, get_string(MSG_CLOCK_NOT_FOUND),
-            sizeof(hw_info.clock_string) - 1);
+    copy_string(hw_info.clock_string, get_string(MSG_CLOCK_NOT_FOUND),
+                sizeof(hw_info.clock_string));
     return;
 }
 
@@ -1097,12 +1104,14 @@ void detect_frequencies(void)
         hw_info.horiz_freq = 15625;     /* 15.625 kHz */
         hw_info.vert_freq = 50;
         hw_info.supply_freq = 50;
-        strncpy(hw_info.mode_string, get_string(MSG_MODE_PAL), sizeof(hw_info.mode_string) - 1);
+        copy_string(hw_info.mode_string, get_string(MSG_MODE_PAL),
+                    sizeof(hw_info.mode_string));
     } else {
         hw_info.horiz_freq = 15734;     /* 15.734 kHz */
         hw_info.vert_freq = 60;
         hw_info.supply_freq = 60;
-        strncpy(hw_info.mode_string, get_string(MSG_MODE_NTSC), sizeof(hw_info.mode_string) - 1);
+        copy_string(hw_info.mode_string, get_string(MSG_MODE_NTSC),
+                    sizeof(hw_info.mode_string));
     }
 
     /* EClock frequency from exec */

@@ -56,8 +56,7 @@ static void copy_base_name(char *dest, const char *src, size_t destsize)
         dest[len] = '\0';
     } else {
         /* No dot found, copy entire string */
-        strncpy(dest, src, destsize - 1);
-        dest[destsize - 1] = '\0';
+        copy_string(dest, src, destsize);
     }
 }
 
@@ -131,10 +130,11 @@ void enumerate_libraries(void)
             if (strstr(lib->lib_Node.ln_Name, ".library") != NULL) {
                 copy_base_name(entry->name, lib->lib_Node.ln_Name, sizeof(entry->name));
             } else { /* not a ".library" */
-                strncpy(entry->name, lib->lib_Node.ln_Name, sizeof(entry->name));
+                copy_string(entry->name, lib->lib_Node.ln_Name,
+                            sizeof(entry->name));
             }
         } else {
-            strncpy(entry->name, "(unknown)", sizeof(entry->name) - 1);
+            copy_string(entry->name, "(unknown)", sizeof(entry->name));
         }
 
         entry->address = (APTR)lib;
@@ -165,8 +165,7 @@ void enumerate_libraries(void)
 
             /* Insert kickstart entry at position 0 */
             entry = &libraries_list.entries[0];
-            strncpy(entry->name, "kick update", sizeof(entry->name) - 1);
-            entry->name[sizeof(entry->name) - 1] = '\0';
+            copy_string(entry->name, "kick update", sizeof(entry->name));
             entry->location = LOC_KICKSTART;
             /* ROM base: 0x00f80000 for 512K, 0x00fc0000 for 256K */
             entry->address = (APTR)(hw_info.kickstart_size >= 512 ? 0x00f80000 : 0x00fc0000);
@@ -185,8 +184,7 @@ void enumerate_libraries(void)
 
         /* Insert kickstart entry at position 0 */
         entry = &libraries_list.entries[0];
-        strncpy(entry->name, "kickstart", sizeof(entry->name) - 1);
-        entry->name[sizeof(entry->name) - 1] = '\0';
+        copy_string(entry->name, "kickstart", sizeof(entry->name));
         entry->location = LOC_KICKSTART;
         /* ROM base: 0x00f80000 for 512K, 0x00fc0000 for 256K */
         entry->address = (APTR)(hw_info.kickstart_size >= 512 ? 0x00f80000 : 0x00fc0000);
@@ -221,10 +219,11 @@ void enumerate_devices(void)
                 copy_base_name(entry->name, dev->dd_Library.lib_Node.ln_Name,
                                sizeof(entry->name));
             } else { //not a ".device"
-                strncpy(entry->name, dev->dd_Library.lib_Node.ln_Name, sizeof(entry->name));
+                copy_string(entry->name, dev->dd_Library.lib_Node.ln_Name,
+                            sizeof(entry->name));
             }
         } else {
-            strncpy(entry->name, "(unknown)", sizeof(entry->name) - 1);
+            copy_string(entry->name, "(unknown)", sizeof(entry->name));
         }
 
         entry->address = (APTR)dev;
@@ -264,10 +263,11 @@ void enumerate_resources(void)
                 copy_base_name(entry->name, res->lib_Node.ln_Name,
                                sizeof(entry->name));
             } else { //not a ".resource"
-                strncpy(entry->name, res->lib_Node.ln_Name, sizeof(entry->name));
+                copy_string(entry->name, res->lib_Node.ln_Name,
+                            sizeof(entry->name));
             }
         } else {
-            strncpy(entry->name, "(unknown)", sizeof(entry->name) - 1);
+            copy_string(entry->name, "(unknown)", sizeof(entry->name));
         }
 
         entry->address = (APTR)res;
@@ -488,7 +488,8 @@ void enumerate_mmu_entries(void)
         }
     } else {
         SoftwareEntry *entry = &mmu_list.entries[0];
-        strncpy(entry->name, "mmu.library not loaded", sizeof(entry->name) - 1);
+        copy_string(entry->name, "mmu.library not loaded",
+                    sizeof(entry->name));
         mmu_list.count++;
     }
     Permit();

@@ -906,7 +906,7 @@ void generate_comment(void)
         comment = get_string(MSG_NA);
     }
 
-    strncpy(hw_info.comment, comment, sizeof(hw_info.comment) - 1);
+    copy_string(hw_info.comment, comment, sizeof(hw_info.comment));
 }
 
 ULONG EClock_Diff_in_ms(struct EClockVal *start, struct EClockVal *end, ULONG EFreq)
