@@ -5,6 +5,7 @@
  * xSysInfo - System software enumeration (libraries, devices, resources)
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <exec/execbase.h>
@@ -94,7 +95,7 @@ void sort_software_list(SoftwareList *list)
  */
 void enumerate_libraries(void)
 {
-    struct Library *lib;
+    struct Node *node;
     ULONG i;
     SoftwareEntry *entry;
 
@@ -102,9 +103,9 @@ void enumerate_libraries(void)
 
     Forbid();
 
-    for (lib = (struct Library *)SysBase->LibList.lh_Head;
-         (struct Node *)lib != (struct Node *)&SysBase->LibList.lh_Tail;
-         lib = (struct Library *)lib->lib_Node.ln_Succ) {
+    for (node = SysBase->LibList.lh_Head; node && node->ln_Succ;
+         node = node->ln_Succ) {
+        struct Library *lib = (struct Library *)node;
 
         /* Detect FPU library presence (outside entry limit check) */
         if (lib->lib_Node.ln_Name) {
@@ -200,15 +201,15 @@ void enumerate_libraries(void)
  */
 void enumerate_devices(void)
 {
-    struct Device *dev;
+    struct Node *node;
 
     memset(&devices_list, 0, sizeof(devices_list));
 
     Forbid();
 
-    for (dev = (struct Device *)SysBase->DeviceList.lh_Head;
-         (struct Node *)dev != (struct Node *)&SysBase->DeviceList.lh_Tail;
-         dev = (struct Device *)dev->dd_Library.lib_Node.ln_Succ) {
+    for (node = SysBase->DeviceList.lh_Head; node && node->ln_Succ;
+         node = node->ln_Succ) {
+        struct Device *dev = (struct Device *)node;
 
         if (devices_list.count >= MAX_SOFTWARE_ENTRIES) break;
 
@@ -244,15 +245,15 @@ void enumerate_devices(void)
  */
 void enumerate_resources(void)
 {
-    struct Library *res;
+    struct Node *node;
 
     memset(&resources_list, 0, sizeof(resources_list));
 
     Forbid();
 
-    for (res = (struct Library *)SysBase->ResourceList.lh_Head;
-         (struct Node *)res != (struct Node *)&SysBase->ResourceList.lh_Tail;
-         res = (struct Library *)res->lib_Node.ln_Succ) {
+    for (node = SysBase->ResourceList.lh_Head; node && node->ln_Succ;
+         node = node->ln_Succ) {
+        struct Library *res = (struct Library *)node;
 
         if (resources_list.count >= MAX_SOFTWARE_ENTRIES) break;
 
@@ -487,7 +488,7 @@ void enumerate_mmu_entries(void)
             CloseLibrary((struct Library *)DOSBase);
         }
     } else {
-        SoftwareEntry *entry = &mmu_list.entries[0];
+        entry = &mmu_list.entries[0];
         copy_string(entry->name, "mmu.library not loaded",
                     sizeof(entry->name));
         mmu_list.count++;
