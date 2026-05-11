@@ -50,7 +50,9 @@ SRCS = src/main.c \
        src/locale.c
 
 ASM_SRCS = src/cpu.S src/berr_trap.S
-TINYSETPATCH_SRC = 3rdparty/TinySetPatch/TinySetPatch.S
+TINYSETPATCH_DIR = 3rdparty/TinySetPatch
+TINYSETPATCH_SRC = $(TINYSETPATCH_DIR)/TinySetPatch.S
+TINYSETPATCH_BIN = $(TINYSETPATCH_DIR)/TinySetPatch
 
 OBJS = $(SRCS:.c=.o)
 
@@ -346,11 +348,9 @@ download-libs: $(IDENTIFY_USR_LHA) $(IDENTIFY_PCI_LHA) $(OPENPCI_LHA) $(MMULIB_L
 	@mv MuManual/Include/pragmas/mmu_pragmas.h 3rdparty/mmu/reference/pragmas/
 	@rm -rf MuManual
 
-
-
-TinySetPatch: $(TINYSETPATCH_SRC)
-	@echo "  VASM $@"
-	@$(VASM) -quiet -Fhunkexe -m68020up -o $@ -nosym $< -I $(NDK_PATH)
+TinySetPatch: $(TINYSETPATCH_SRC) $(TINYSETPATCH_DIR)/Makefile Makefile
+	@$(MAKE) -s -C $(TINYSETPATCH_DIR) TinySetPatch VASM=$(VASM) NDK_PATH="$(NDK_PATH)"
+	@cp $(TINYSETPATCH_BIN) $@
 
 disk: $(TARGET) download-libs TinySetPatch
 	@echo "  DISK"
