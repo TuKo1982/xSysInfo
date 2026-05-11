@@ -1151,11 +1151,12 @@ static void draw_speed_panel(void)
             ULONG factor_x100 = (bench_results.dhrystones * 100) / reference_systems[i].dhrystones;
             char factor_str[16];
         int factor_off = 0;
+        if (factor_x100 <= 100000) factor_str[factor_off++] = ' ';
         if (factor_x100 <= 10000) factor_str[factor_off++] = ' ';
         if (factor_x100 <= 1000) factor_str[factor_off++] = ' ';
             format_scaled(factor_str + factor_off, sizeof(factor_str)-factor_off, factor_x100, FALSE);
             SetAPen(rp, COLOR_HIGHLIGHT);
-            TightText(rp, SPEED_PANEL_X + 132, y, (CONST_STRPTR)factor_str, -1, 7);
+            TightText(rp, SPEED_PANEL_X + 125, y, (CONST_STRPTR)factor_str, -1, 7);
         }
 
         y += 8;
@@ -1182,7 +1183,7 @@ static void draw_speed_panel(void)
     SetAPen(rp, COLOR_TEXT);
     snprintf(buffer, sizeof(buffer), "%s ",
                  get_string(MSG_MFLOPS));
-    TightText(rp, SPEED_PANEL_X + 84, y, (CONST_STRPTR)buffer, -1, 4);
+    TightText(rp, SPEED_PANEL_X + 75, y, (CONST_STRPTR)buffer, -1, 4);
     if (hw_info.fpu_type != FPU_NONE && bench_results.benchmarks_valid && hw_info.fpu_enabled) {
         char scaled[16];
         format_scaled(scaled, sizeof(scaled), bench_results.mflops, TRUE);
@@ -1191,7 +1192,7 @@ static void draw_speed_panel(void)
         snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_NA));
     }
     SetAPen(rp, COLOR_HIGHLIGHT);
-    TightText(rp, SPEED_PANEL_X + 134, y, (CONST_STRPTR)buffer, -1, 4);
+    TightText(rp, SPEED_PANEL_X + 125, y, (CONST_STRPTR)buffer, -1, 4);
 
     /* Memory speeds header */
     y += 8;
