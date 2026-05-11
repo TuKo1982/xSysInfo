@@ -513,12 +513,32 @@ void scan_scsi_devices(const char *handler_name, ULONG base_unit)
 }
 
 /*
- * Format size as MB string, or "?" if unknown
+ * Format size as MB/GB string, or "?" if unknown
  */
 static void format_size_mb(ULONG size_mb, char *buffer, ULONG bufsize)
 {
     if (size_mb > 0) {
-        snprintf(buffer, bufsize, "%luMB", (unsigned long)size_mb);
+        if (size_mb > 1024) {
+            ULONG whole_gb = size_mb / 1024;
+
+            if (whole_gb < 100) {
+                ULONG tenths_gb = ((size_mb % 1024) * 10 + 512) / 1024;
+
+                if (tenths_gb == 10) {
+                    whole_gb++;
+                    tenths_gb = 0;
+                }
+
+                snprintf(buffer, bufsize, "%lu.%luGB",
+                         (unsigned long)whole_gb,
+                         (unsigned long)tenths_gb);
+            } else {
+                whole_gb += ((size_mb % 1024) >= 512) ? 1 : 0;
+                snprintf(buffer, bufsize, "%luGB", (unsigned long)whole_gb);
+            }
+        } else {
+            snprintf(buffer, bufsize, "%luMB", (unsigned long)size_mb);
+        }
     } else {
         snprintf(buffer, bufsize, "?");
     }
