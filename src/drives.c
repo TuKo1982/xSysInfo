@@ -42,10 +42,14 @@ extern struct DosLibrary *DOSBase;
 
 /* DOS type identifiers */
 /* ID_DOS_DISK and ID_FFS_DISK are defined in dos/dos.h */
+     // ID_DOS_DISK     0x444F5300  /* 'DOS\0' */
+     // ID_FFS_DISK     0x444F5301  /* 'DOS\1' */
 #define ID_INTER_DOS    0x444F5302  /* 'DOS\2' */
 #define ID_INTER_FFS    0x444F5303  /* 'DOS\3' */
 #define ID_DC_DOS       0x444F5304  /* 'DOS\4' */
 #define ID_DC_FFS       0x444F5305  /* 'DOS\5' */
+#define ID_LNFS_DOS     0x444F5306  /* 'DOS\6' */
+#define ID_LNFS_FFS     0x444F5307  /* 'DOS\7' */
 #define ID_SFS_BE       0x53465300  /* 'SFS\0' */
 #define ID_PFS          0x50465300  /* 'PFS\0' */
 
@@ -67,6 +71,10 @@ FilesystemType identify_filesystem(ULONG dos_type)
             return FS_DCACHE_OFS;
         case ID_DC_FFS:
             return FS_DCACHE_FFS;
+        case ID_LNFS_DOS:
+            return FS_LNFS_OFS;
+        case ID_LNFS_FFS:
+            return FS_LNFS_FFS;
         case ID_SFS_BE:
             return FS_SFS;
         case ID_PFS:
@@ -88,6 +96,8 @@ const char *get_filesystem_string(FilesystemType fs)
         case FS_INTL_FFS:   return get_string(MSG_INTL_FFS);
         case FS_DCACHE_OFS: return get_string(MSG_DCACHE_OFS);
         case FS_DCACHE_FFS: return get_string(MSG_DCACHE_FFS);
+        case FS_LNFS_OFS:   return get_string(MSG_LNFS_OFS);
+        case FS_LNFS_FFS:   return get_string(MSG_LNFS_FFS);
         case FS_SFS:        return get_string(MSG_SFS);
         case FS_PFS:        return get_string(MSG_PFS);
         default:            return get_string(MSG_UNKNOWN_FS);

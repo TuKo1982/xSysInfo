@@ -507,6 +507,12 @@ DC Old File System
 MSG_DCACHE_FFS
 DC Fast File System
 ;
+MSG_LNFS_OFS
+LNFS Old File System
+;
+MSG_LNFS_FFS
+LNFS Fast File System
+;
 MSG_SFS
 Smart File System
 ;

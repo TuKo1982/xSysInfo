@@ -30,6 +30,8 @@ typedef enum {
     FS_INTL_FFS,
     FS_DCACHE_OFS,
     FS_DCACHE_FFS,
+    FS_LNFS_OFS,
+    FS_LNFS_FFS,
     FS_SFS,
     FS_PFS,
     FS_UNKNOWN

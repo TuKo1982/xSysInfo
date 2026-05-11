@@ -204,6 +204,8 @@ typedef enum {
     MSG_INTL_FFS,
     MSG_DCACHE_OFS,
     MSG_DCACHE_FFS,
+    MSG_LNFS_OFS,
+    MSG_LNFS_FFS,
     MSG_SFS,
     MSG_PFS,
     MSG_UNKNOWN_FS,

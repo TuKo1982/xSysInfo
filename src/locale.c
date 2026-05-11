@@ -214,6 +214,8 @@ static const char *default_strings[MSG_COUNT] = {
     /* MSG_INTL_FFS */               "Intl Fast File System",
     /* MSG_DCACHE_OFS */             "DC Old File System",
     /* MSG_DCACHE_FFS */             "DC Fast File System",
+    /* MSG_LNFS_OFS */               "LNFS Old File System",
+    /* MSG_LNFS_FFS */               "LNFS Fast File System",
     /* MSG_SFS */                    "Smart File System",
     /* MSG_PFS */                    "Professional File System",
     /* MSG_UNKNOWN_FS */             "Unknown File System",
