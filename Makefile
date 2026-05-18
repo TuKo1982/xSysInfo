@@ -101,7 +101,8 @@ mmu: $(FLEXCAT_BIN)
 # Catalog definitions - maps source directory to AmigaOS language name
 CATALOG_DESC = catalogs/xSysInfo.cd
 CATALOG_DIR = catalogs/build
-CATALOG_LANGS = german:deutsch french:français italian:italiano turkish:türkçe polish:polski
+CATALOG_LANGS = german:deutsch french:français italian:italiano \
+		turkish:türkçe polish:polski portuguese:português
 
 # Build all catalogs
 catalogs: $(FLEXCAT_BIN)

@@ -1,6 +1,6 @@
 ## version $VER: xSysInfo.catalog 1.0 (13.05.2026)
-## language portugu√™s
-## codeset 0
+## language portuguÍs
+## codeset 4
 ;
 ; Portuguese translation for xSysInfo
 ; Translator:
@@ -8,7 +8,7 @@
 ; Header strings
 ;
 MSG_TAGLINE
-Um Programa de Informa√ß√£o do Sistema Amiga
+Um Programa de InformaÁ„o do Sistema Amiga
 ;
 MSG_CONTACT_LABEL
 Contacto:
@@ -17,22 +17,22 @@ MSG_SYSTEM_SOFTWARE
 SOFTWARE DO SISTEMA INSTALADO
 ;
 MSG_INTERNAL_HARDWARE
-INFORMA√á√ÉO DE HARDWARE
+INFORMA«√O DE HARDWARE
 ;
 MSG_SPEED_COMPARISONS
-COMPARA√á√ïES DE VELOCIDADE
+COMPARA«’ES DE VELOCIDADE
 ;
 MSG_MEMORY_INFO
-INFORMA√á√ÉO DE MEM√ìRIA
+INFORMA«√O DE MEM”RIA
 ;
 MSG_BOARDS_INFO
-INFORMA√á√ÉO DE PLACAS AUTOCONFIG
+INFORMA«√O DE PLACAS AUTOCONFIG
 ;
 MSG_DRIVES_INFO
-INFORMA√á√ÉO DE UNIDADES
+INFORMA«√O DE UNIDADES
 ;
 MSG_SCSI_INFO
-INFORMA√á√ÉO DE DISPOSITIVOS SCSI
+INFORMA«√O DE DISPOSITIVOS SCSI
 ;
 MSG_LIBRARIES
 BIBLIOTECAS
@@ -53,7 +53,7 @@ MSG_SHRINK
 REDUZIR
 ;
 MSG_CLOCK
-Rel√≥gio
+RelÛgio
 ;
 MSG_DMA_GFX
 DMA/Gfx
@@ -62,7 +62,7 @@ MSG_MODE
 Modo
 ;
 MSG_DISPLAY
-Ecr√£
+Ecr„
 ;
 MSG_CPU_MHZ
 CPU/MHz
@@ -77,7 +77,7 @@ MSG_VBR
 VBR
 ;
 MSG_COMMENT
-Coment√°rio
+Coment·rio
 ;
 MSG_HORIZ_KHZ
 Horiz KHz
@@ -92,7 +92,7 @@ MSG_GARY_REV
 Rev. Gary
 ;
 MSG_CARD_SLOT
-Slot de Cart√£o
+Slot de Cart„o
 ;
 MSG_VERT_HZ
 Vert Hz
@@ -149,19 +149,19 @@ MSG_REF_A4000
 A4000 68040 25MHz
 ;
 MSG_REF_YOU
-Voc√™
+VocÍ
 ;
 MSG_START_ADDRESS
-ENDERE√áO INICIAL
+ENDERE«O INICIAL
 ;
 MSG_END_ADDRESS
-ENDERE√áO FINAL
+ENDERE«O FINAL
 ;
 MSG_TOTAL_SIZE
 TAMANHO TOTAL
 ;
 MSG_MEMORY_TYPE
-TIPO DE MEM√ìRIA
+TIPO DE MEM”RIA
 ;
 MSG_PRIORITY
 PRIORIDADE
@@ -173,7 +173,7 @@ MSG_UPPER_BOUND
 LIMITE SUPERIOR
 ;
 MSG_FIRST_ADDRESS
-PRIMEIRO ENDERE√áO
+PRIMEIRO ENDERE«O
 ;
 MSG_AMOUNT_FREE
 QUANTIDADE LIVRE
@@ -182,25 +182,25 @@ MSG_LARGEST_BLOCK
 MAIOR BLOCO
 ;
 MSG_NUM_CHUNKS
-N√öMERO DE BLOCOS
+N⁄MERO DE BLOCOS
 ;
 MSG_NODE_NAME
-NOME DO N√ì
+NOME DO N”
 ;
 MSG_MEMORY_SPEED
-VELOCIDADE DA MEM√ìRIA
+VELOCIDADE DA MEM”RIA
 ;
 MSG_DISK_ERRORS
-N√öMERO DE ERROS DE DISCO
+N⁄MERO DE ERROS DE DISCO
 ;
 MSG_UNIT_NUMBER
-N√öMERO DE UNIDADE
+N⁄MERO DE UNIDADE
 ;
 MSG_DISK_STATE
 ESTADO DO DISCO
 ;
 MSG_TOTAL_BLOCKS
-N√öMERO TOTAL DE BLOCOS
+N⁄MERO TOTAL DE BLOCOS
 ;
 MSG_BLOCKS_USED
 TOTAL DE BLOCOS UTILIZADOS
@@ -218,7 +218,7 @@ MSG_DEVICE_NAME
 NOME DO DISPOSITIVO
 ;
 MSG_SURFACES
-SUPERF√çCIES
+SUPERFÕCIES
 ;
 MSG_SECTORS_PER_SIDE
 SECTORES POR LADO
@@ -233,7 +233,7 @@ MSG_HIGHEST_CYLINDER
 CILINDRO MAIS ALTO
 ;
 MSG_NUM_BUFFERS
-N√öMERO DE BUFFERS
+N⁄MERO DE BUFFERS
 ;
 MSG_SPEED
 VELOCIDADE DA UNIDADE
@@ -248,7 +248,7 @@ MSG_DISK_NO_DISK_INSERTED
 Sem Disco Inserido
 ;
 MSG_BOARD_ADDRESS
-Endere√ßo da Placa
+EndereÁo da Placa
 ;
 MSG_BOARD_SIZE
 Tamanho da Placa
@@ -263,16 +263,16 @@ MSG_MANUFACTURER
 Fabricante
 ;
 MSG_SERIAL_NO
-N¬∫ de S√©rie
+N∫ de SÈrie
 ;
 MSG_BOARDS_NO_BOARDS_FOUND
-Nenhuma placa de expans√£o encontrada
+Nenhuma placa de expans„o encontrada
 ;
 MSG_BTN_QUIT
 SAIR
 ;
 MSG_BTN_MEMORY
-MEM√ìRIA
+MEM”RIA
 ;
 MSG_BTN_DRIVES
 UNIDADES
@@ -320,7 +320,7 @@ MSG_YES
 SIM
 ;
 MSG_NO
-N√ÉO
+N√O
 ;
 MSG_ON
 LIGADO
@@ -332,10 +332,10 @@ MSG_IN_USE
 EM USO
 ;
 MSG_CLOCK_FOUND
-REL√ìGIO ENCONTRADO
+REL”GIO ENCONTRADO
 ;
 MSG_CLOCK_NOT_FOUND
-N√ÉO ENCONTRADO
+N√O ENCONTRADO
 ;
 MSG_DISK_OK
 Disco OK, Leitura/Escrita
@@ -455,25 +455,25 @@ MSG_OFS
 Sistema de Ficheiros Antigo
 ;
 MSG_FFS
-Sistema de Ficheiros R√°pido
+Sistema de Ficheiros R·pido
 ;
 MSG_INTL_OFS
 SFA Antigo Internacional
 ;
 MSG_INTL_FFS
-SFA R√°pido Internacional
+SFA R·pido Internacional
 ;
 MSG_DCACHE_OFS
 SFA Antigo DC
 ;
 MSG_DCACHE_FFS
-SFA R√°pido DC
+SFA R·pido DC
 ;
 MSG_LNFS_OFS
 SFA Antigo LNFS
 ;
 MSG_LNFS_FFS
-SFA R√°pido LNFS
+SFA R·pido LNFS
 ;
 MSG_SFS
 Sistema de Ficheiros Inteligente
@@ -491,16 +491,16 @@ MSG_MEASURING_SPEED
 A medir velocidade
 ;
 MSG_ERR_NO_IDENTIFY
-N√£o foi poss√≠vel abrir identify.library v13+
+N„o foi possÌvel abrir identify.library v13+
 ;
 MSG_ERR_NO_MEMORY
-Mem√≥ria insuficiente
+MemÛria insuficiente
 ;
 MSG_ERR_NO_SCREEN
-N√£o foi poss√≠vel abrir o ecr√£
+N„o foi possÌvel abrir o ecr„
 ;
 MSG_ERR_NO_WINDOW
-N√£o foi poss√≠vel abrir a janela
+N„o foi possÌvel abrir a janela
 ;
 MSG_COMMENT_WARP11
 WARP 11!
@@ -509,22 +509,22 @@ MSG_COMMENT_LUDICROUS
 Velocidade absurda!
 ;
 MSG_COMMENT_RIDICULUS
-Velocidade rid√≠cula!
+Velocidade ridÌcula!
 ;
 MSG_COMMENT_BLAZING
-Incrivelmente r√°pido!
+Incrivelmente r·pido!
 ;
 MSG_COMMENT_VERY_FAST
-Muito r√°pido!
+Muito r·pido!
 ;
 MSG_COMMENT_FAST
-Sistema r√°pido
+Sistema r·pido
 ;
 MSG_COMMENT_GOOD
 Boa velocidade
 ;
 MSG_COMMENT_CLASSIC
-Amiga cl√°ssico
+Amiga cl·ssico
 ;
 MSG_COMMENT_DEFAULT
 O que posso dizer!
@@ -542,7 +542,7 @@ MSG_SDMAC_REV
 Chip SCSI
 ;
 MSG_RAMSEY_PAGE
-Modo de p√°gina
+Modo de p·gina
 ;
 MSG_RAMSEY_BURST
 Burst
@@ -581,13 +581,13 @@ MSG_GARY_UNKNOWN
 DESCONHECIDO
 ;
 MSG_EXT_INFO
-Informa√ß√£o adicional para A3000/4000
+InformaÁ„o adicional para A3000/4000
 ;
 MSG_NV_RAM
 NV-RAM (BattMem):
 ;
 MSG_AMNESIA
-Amn√©sia
+AmnÈsia
 ;
 MSG_SHARED_AMNESIA
 Amn. partilhada
@@ -599,10 +599,10 @@ MSG_SCAN_LUN
 Pesquisar LUNs
 ;
 MSG_SYNC_TRANS
-S√≠ncrono
+SÌncrono
 ;
 MSG_FAST_SYNC
-Sync R√°pido
+Sync R·pido
 ;
 MSG_QUEUING
 Fila de espera
@@ -704,25 +704,25 @@ MSG_UNCERTAIN
 incerto
 ;
 MSG_MMU_SIZE
-Tamanho de p√°gina MMU
+Tamanho de p·gina MMU
 ;
 MSG_MMU_ADDRESS_HINT
-Endere√ßos em hexadecimal!
+EndereÁos em hexadecimal!
 ;
 MSG_MMU_FLAGS1_HINT
 WP=Prot.Escrita U=Usado M=Modificado G=Global
 ;
 MSG_MMU_FLAGS2_HINT
-TT=Traduzido UPx=P√°gina-UtilX CI=InibCache
+TT=Traduzido UPx=P·gina-UtilX CI=InibCache
 ;
 MSG_MMU_FLAGS3_HINT
-IM=Impreciso NS=n√£o-serie CB=CopyBack
+IM=Impreciso NS=n„o-serie CB=CopyBack
 ;
 MSG_MMU_FLAGS4_HINT
-SO=Supervisor BL=Vazio SH=Partilhado INV=Inv√°lido
+SO=Supervisor BL=Vazio SH=Partilhado INV=Inv·lido
 ;
 MSG_MMU_FLAGS5_HINT
-SNG=P√°gina √önica RP=Repar√°vel IO=Espa√ßoIO
+SNG=P·gina ⁄nica RP=Repar·vel IO=EspaÁoIO
 ;
 MSG_MMU_FLAGS6_HINT
 Ux=UtilX SW=Trocado MAP=Remapeado BN=Agrupado
