@@ -102,7 +102,8 @@ mmu: $(FLEXCAT_BIN)
 CATALOG_DESC = catalogs/xSysInfo.cd
 CATALOG_DIR = catalogs/build
 CATALOG_LANGS = german:deutsch french:français italian:italiano \
-		turkish:türkçe polish:polski portuguese:português
+		turkish:türkçe polish:polski portuguese:português \
+		hungarian:magyar
 
 # Build all catalogs
 catalogs: $(FLEXCAT_BIN)
