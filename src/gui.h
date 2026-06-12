@@ -49,6 +49,8 @@ typedef enum {
     BTN_DRV_EXIT,
     BTN_DRV_SCSI,
     BTN_DRV_SPEED,
+    BTN_DRV_PAGE_PREV,      /* Drive list pager */
+    BTN_DRV_PAGE_NEXT,
 
     /* Boards view button */
     BTN_BOARD_EXIT,

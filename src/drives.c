@@ -40,6 +40,10 @@
 /* Global drive list */
 DriveList drive_list;
 
+/* Drive list pagination: the view shows one page of buttons at a time */
+#define DRIVES_PER_PAGE 10
+static ULONG drive_page = 0;
+
 /* External references */
 extern AppContext *app;
 extern Button buttons[];
@@ -254,7 +258,10 @@ static void scan_dos_list(void)
     debug("  drives: DosList locked\n");
 
     while ((dol = MyNextDosEntry(dol, LDF_DEVICES)) != NULL) {
-        if (drive_list.count >= MAX_DRIVES) break;
+        if (drive_list.count >= MAX_DRIVES) {
+            debug("  drives: MAX_DRIVES reached, skipping remaining devices\n");
+            break;
+        }
         buffer[0] = '\0';
         DriveInfo *drive = &drive_list.drives[drive_list.count];
         drive->is_valid = FALSE;
@@ -264,7 +271,9 @@ static void scan_dos_list(void)
         snprintf(drive->device_name, sizeof(drive->device_name), "%s:",
                      buffer);
 
-        debug("  drives: Found device '%s'\n", (LONG)drive->device_name);
+        debug("  drives: Found device '%s' task=$%08lx startup=$%08lx\n",
+              (LONG)drive->device_name, (ULONG)dol->dol_Task,
+              (ULONG)dol->dol_misc.dol_handler.dol_Startup);
 
         /* Try to get startup info */
         if (dol->dol_misc.dol_handler.dol_Startup) {
@@ -310,7 +319,14 @@ static void scan_dos_list(void)
                           (LONG)drive->geometry_total_blocks);
 
                     drive->is_valid = TRUE;
+                } else {
+                    debug("  drives: %s envec=$%08lx tablesize=%lu not usable\n",
+                          (LONG)drive->device_name, (ULONG)de,
+                          (ULONG)(de && (ULONG)de > 0x100 ? de->de_TableSize : 0));
                 }
+            } else {
+                debug("  drives: %s startup is not a FSSM\n",
+                      (LONG)drive->device_name);
             }
         }
 
@@ -319,9 +335,11 @@ static void scan_dos_list(void)
             drive->disk_state = DISK_NO_DISK;
         }
 
-        if (drive->is_valid || drive->handler_name[0]) {
-            drive_list.count++;
-        }
+        /* Keep every DOS device for now; startup parsing is only
+         * enrichment. The final keep/drop decision happens after volume
+         * matching and Info(), so drives whose startup is not a plain
+         * FileSysStartupMsg (e.g. PiStorm mounters) still show up. */
+        drive_list.count++;
     }
 
     debug("  drives: Unlocking DosList...\n");
@@ -521,6 +539,36 @@ static void check_scsi_support_all(void)
 }
 
 /*
+ * Helper: Drop DOS devices that turned out not to be drives
+ *
+ * A row survives when anything disk-like was found for it: a parsed
+ * FileSysStartupMsg (handler name), a matched volume, or successful
+ * Info(). Plain I/O handlers like CON:, SER: or PRT: have none of
+ * these and are removed here.
+ */
+static void prune_drive_list(void)
+{
+    ULONG i, kept = 0;
+
+    for (i = 0; i < drive_list.count; i++) {
+        DriveInfo *drive = &drive_list.drives[i];
+
+        if (drive->is_valid || drive->handler_name[0] ||
+            drive->volume_name[0]) {
+            if (kept != i) {
+                drive_list.drives[kept] = *drive;
+            }
+            kept++;
+        } else {
+            debug("  drives: Dropping '%s' (no FSSM, volume or Info)\n",
+                  (LONG)drive->device_name);
+        }
+    }
+
+    drive_list.count = kept;
+}
+
+/*
  * Enumerate all drives
  */
 void enumerate_drives(void)
@@ -528,6 +576,7 @@ void enumerate_drives(void)
     debug("  drives: Starting enumeration...\n");
 
     memset(&drive_list, 0, sizeof(drive_list));
+    drive_page = 0;
     debug("  drives: Scan DosList...\n");
 
     /* First pass: Scan DosList for devices */
@@ -541,8 +590,12 @@ void enumerate_drives(void)
     /* Third pass: Query detailed info */
     query_drive_details();
 
+    debug("  drives: Prune non-drives...\n");
+    /* Fourth pass: Drop entries with no drive evidence */
+    prune_drive_list();
+
     debug("  drives: Check SCSI-support...\n");
-    /* Fourth pass: Check SCSI support */
+    /* Fifth pass: Check SCSI support */
     check_scsi_support_all();
 
     debug("  drives: Enumeration complete, found %ld drives\n", (LONG)drive_list.count);
@@ -1057,6 +1110,12 @@ static void draw_drives_data(BOOL full_redraw)
     if (btn) draw_button(btn);
     btn = find_button(BTN_DRV_SPEED);
     if (btn) draw_button(btn);
+
+    /* Draw pager buttons (only added when the list spans pages) */
+    btn = find_button(BTN_DRV_PAGE_PREV);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_DRV_PAGE_NEXT);
+    if (btn) draw_button(btn);
 }
 
 /*
@@ -1080,15 +1139,30 @@ void drives_view_update_buttons(void)
 {
     BOOL scsi_enabled = FALSE;
     BOOL speed_enabled = FALSE;
-    ULONG i;
+    ULONG i, first;
+    ULONG max_page;
     WORD y = 28;
 
-    /* Drive selection buttons */
-    for (i = 0; i < drive_list.count && i < 10; i++) {
+    /* Drive selection buttons, one page at a time */
+    max_page = drive_list.count ?
+               (drive_list.count - 1) / DRIVES_PER_PAGE : 0;
+    if (drive_page > max_page) drive_page = max_page;
+    first = drive_page * DRIVES_PER_PAGE;
+
+    for (i = first;
+         i < drive_list.count && i < first + DRIVES_PER_PAGE; i++) {
         add_button(10, y, 70, 12,
                    drive_list.drives[i].device_name,
                    (ButtonID)(BTN_DRV_DRIVE_BASE + i), TRUE);
         y += 14;
+    }
+
+    /* Pager below the drive buttons when the list spans pages */
+    if (drive_list.count > DRIVES_PER_PAGE) {
+        add_button(10, 170, 33, 12, "<", BTN_DRV_PAGE_PREV,
+                   drive_page > 0);
+        add_button(47, 170, 33, 12, ">", BTN_DRV_PAGE_NEXT,
+                   drive_page < max_page);
     }
 
     /* Check capabilities of selected drive */
@@ -1096,7 +1170,10 @@ void drives_view_update_buttons(void)
         app->selected_drive < (LONG)drive_list.count) {
         DriveInfo *drive = &drive_list.drives[app->selected_drive];
         scsi_enabled = drive->scsi_supported;
-        speed_enabled = (drive->disk_state != DISK_NO_DISK);
+        /* Speed needs a disk and an exec device to read from; volume-only
+         * entries (RAM:, mounts without a parseable FSSM) have neither */
+        speed_enabled = (drive->disk_state != DISK_NO_DISK &&
+                         drive->handler_name[0] != '\0');
     }
 
     /* Action buttons */
@@ -1106,6 +1183,19 @@ void drives_view_update_buttons(void)
                get_string(MSG_BTN_SPEED), BTN_DRV_SPEED, speed_enabled);
     add_button(220, 188, 52, 12,
                get_string(MSG_BTN_EXIT), BTN_DRV_EXIT, TRUE);
+}
+
+/*
+ * Redraw the drives view after a page flip: clear the drive button
+ * column first so a shorter page leaves no stale button images behind.
+ */
+static void flip_drive_page(void)
+{
+    SetAPen(app->rp, COLOR_BACKGROUND);
+    RectFill(app->rp, 10, 28, 79, 166);
+
+    update_button_states();
+    draw_drives_view();
 }
 
 /*
@@ -1133,6 +1223,20 @@ void drives_view_handle_button(ButtonID id)
                 show_status_overlay(get_string(MSG_MEASURING_SPEED));
                 measure_drive_speed(app->selected_drive);
                 hide_status_overlay();
+            }
+            break;
+
+        case BTN_DRV_PAGE_PREV:
+            if (drive_page > 0) {
+                drive_page--;
+                flip_drive_page();
+            }
+            break;
+
+        case BTN_DRV_PAGE_NEXT:
+            if ((drive_page + 1) * DRIVES_PER_PAGE < drive_list.count) {
+                drive_page++;
+                flip_drive_page();
             }
             break;
 
