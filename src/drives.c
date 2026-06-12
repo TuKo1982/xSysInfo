@@ -14,6 +14,12 @@
 #include <dos/filehandler.h>
 #include <devices/timer.h>
 #include <devices/trackdisk.h>
+#include <devices/newstyle.h>
+
+/* 64-bit trackdisk read via NSD; not in all NDK headers */
+#ifndef NSCMD_TD_READ64
+#define NSCMD_TD_READ64 0xC000
+#endif
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -641,6 +647,35 @@ BOOL check_disk_present(ULONG index)
 }
 
 /*
+ * Check whether an open device implements NSCMD_TD_READ64 via the
+ * New Style Device query.
+ */
+static BOOL nsd_supports_read64(struct IOStdReq *io)
+{
+    struct NSDeviceQueryResult nsdqr;
+    UWORD *cmd;
+    BYTE error;
+
+    memset(&nsdqr, 0, sizeof(nsdqr));
+
+    io->io_Command = NSCMD_DEVICEQUERY;
+    io->io_Data = &nsdqr;
+    io->io_Length = sizeof(nsdqr);
+
+    error = DoIO((struct IORequest *)io);
+    if (error != 0 || io->io_Actual < 16 ||
+        nsdqr.DeviceType != NSDEVTYPE_TRACKDISK ||
+        !nsdqr.SupportedCommands) {
+        return FALSE;
+    }
+
+    for (cmd = nsdqr.SupportedCommands; *cmd; cmd++) {
+        if (*cmd == NSCMD_TD_READ64) return TRUE;
+    }
+    return FALSE;
+}
+
+/*
  * Measure drive speed (bytes/second)
  */
 ULONG measure_drive_speed(ULONG index)
@@ -658,8 +693,9 @@ ULONG measure_drive_speed(ULONG index)
     uint64_t elapsed;
     ULONG bytes_per_sec = 0;
     ULONG num_reads;
-    ULONG read_offset;
+    UWORD read_cmd = CMD_READ;
     uint64_t read_offset_bytes = 0;
+    uint64_t offset64;
     ULONG i;
     BYTE error;
     BOOL is_floppy;
@@ -737,7 +773,7 @@ ULONG measure_drive_speed(ULONG index)
         goto cleanup;
     }
 
-    /* Calculate read offset - start from low cylinder, clamp to 32-bit */
+    /* Calculate read offset - start from low cylinder */
     if (drive->surfaces && drive->sectors_per_track) {
         read_offset_bytes = (uint64_t)drive->low_cylinder *
                             (uint64_t)drive->surfaces *
@@ -750,24 +786,48 @@ ULONG measure_drive_speed(ULONG index)
         debug("  drives: Missing geometry, defaulting read offset to 0\n");
     }
 
-    if (read_offset_bytes > (uint64_t)(ULONG_MAX - buffer_size)) {
-        uint64_t limit = (uint64_t)(ULONG_MAX - buffer_size);
-        if (block_size > 1) limit -= limit % block_size;
-        read_offset_bytes = limit;
+    /* CMD_READ takes a 32-bit byte offset; partitions starting beyond
+     * 4 GB need one of the 64-bit read commands */
+    if (read_offset_bytes + (uint64_t)num_reads * buffer_size > 0xFFFFFFFFULL) {
+        if (nsd_supports_read64(io)) {
+            read_cmd = NSCMD_TD_READ64;
+            debug("  drives: Using NSD TD_READ64 for offset beyond 4 GB\n");
+        } else {
+            read_cmd = TD_READ64;
+            debug("  drives: Trying TD64 TD_READ64 for offset beyond 4 GB\n");
+        }
     }
 
-    read_offset = (ULONG)read_offset_bytes;
-
-    debug("  drives: Speed test on %s unit %ld, %ld reads of %ld bytes at offset %ld\n",
+    debug("  drives: Speed test on %s unit %ld, %ld reads of %ld bytes at offset %lu MB\n",
           (LONG)drive->handler_name, (LONG)drive->unit_number,
-          (LONG)num_reads, (LONG)buffer_size, (LONG)read_offset);
+          (LONG)num_reads, (LONG)buffer_size,
+          (ULONG)(read_offset_bytes >> 20));
+
+    /* Untimed probe read; if the 64-bit command is not implemented,
+     * fall back to measuring at the start of the device instead of
+     * issuing reads at a wrapped 32-bit offset */
+    if (read_cmd != CMD_READ) {
+        io->io_Command = read_cmd;
+        io->io_Data = buffer;
+        io->io_Length = block_size;
+        io->io_Offset = (ULONG)read_offset_bytes;
+        io->io_Actual = (ULONG)(read_offset_bytes >> 32);
+
+        error = DoIO((struct IORequest *)io);
+        if (error != 0) {
+            debug("  drives: 64-bit read failed (error %ld), reading at offset 0 instead\n",
+                  (LONG)error);
+            read_cmd = CMD_READ;
+            read_offset_bytes = 0;
+        }
+    }
 
     /* Warm up floppy by doing an untimed read to get the head on track */
     if (is_floppy) {
         io->io_Command = CMD_READ;
         io->io_Data = buffer;
         io->io_Length = block_size;
-        io->io_Offset = read_offset;
+        io->io_Offset = (ULONG)read_offset_bytes;
 
         error = DoIO((struct IORequest *)io);
         if (error != 0) {
@@ -781,10 +841,15 @@ ULONG measure_drive_speed(ULONG index)
 
     /* Perform reads */
     for (i = 0; i < num_reads; i++) {
-        io->io_Command = CMD_READ;
+        offset64 = read_offset_bytes + (uint64_t)i * buffer_size;
+
+        io->io_Command = read_cmd;
         io->io_Data = buffer;
         io->io_Length = buffer_size;
-        io->io_Offset = read_offset + (i * buffer_size);
+        io->io_Offset = (ULONG)offset64;
+        /* High 32 offset bits for the 64-bit read commands; CMD_READ
+         * ignores io_Actual on input and the offset fits 32 bits then */
+        io->io_Actual = (ULONG)(offset64 >> 32);
 
         error = DoIO((struct IORequest *)io);
         if (error != 0) {
