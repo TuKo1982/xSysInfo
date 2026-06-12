@@ -262,7 +262,17 @@ BOOL get_super_scalar_mode(void)
     if (hw_info.cpu_type >= CPU_68060 && hw_info.cpu_type <= CPU_68080) {
         ULONG cpuReg = GetCPUReg();
         cpuReg &= 1L; //lowest bit is super scalar bit
-        return cpuReg > 0;
+        if (!cpuReg)
+            return FALSE;
+
+        if (hw_info.cpu_type <= CPU_68LC060) {
+            ULONG cache_bits = GetCacheBits();
+            ULONG cache_mask = CACRF_EBC060 | CACRF_ESB060;
+
+            return (cache_bits & cache_mask) == cache_mask;
+        }
+
+        return TRUE;
     } else {
         return FALSE;
     }
@@ -270,14 +280,12 @@ BOOL get_super_scalar_mode(void)
 
 BOOL set_super_scalar_mode(BOOL value)
 {
-    ULONG cpuReg, cache_bits;
+    ULONG cache_bits;
 
     if (hw_info.cpu_type < CPU_68060 || hw_info.cpu_type > CPU_68080)
         return FALSE;
 
-    cpuReg = value ? 1L : 0L;
-    cpuReg = SetCPUReg(cpuReg);
-    cpuReg &= 1L;
+    SetCPUReg(value ? 1L : 0L);
 
     /* Also toggle enhanced branch cache and store buffer */
     cache_bits = GetCacheBits();
@@ -287,7 +295,7 @@ BOOL set_super_scalar_mode(BOOL value)
         cache_bits &= ~(CACRF_EBC060 | CACRF_ESB060);
     SetCacheBits(cache_bits, cache_bits | CACRF_EBC060 | CACRF_ESB060);
 
-    return cpuReg > 0;
+    return get_super_scalar_mode();
 }
 
 /*
