@@ -1470,7 +1470,8 @@ static void draw_speed_panel(void)
     SetAPen(rp, COLOR_TEXT);
     snprintf(buffer, sizeof(buffer), "%s ",
                  get_string(MSG_MFLOPS));
-    TightText(rp, SPEED_PANEL_X + 75, y, (CONST_STRPTR)buffer, -1, 4);
+    /* Starts past the Mips value's worst case ("99.99" ends at x+80) */
+    TightText(rp, SPEED_PANEL_X + 84, y, (CONST_STRPTR)buffer, -1, 4);
     if (hw_info.fpu_type != FPU_NONE && bench_results.benchmarks_valid && hw_info.fpu_enabled) {
         char scaled[16];
         format_scaled(scaled, sizeof(scaled), bench_results.mflops, TRUE);
@@ -1479,7 +1480,7 @@ static void draw_speed_panel(void)
         snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_NA));
     }
     SetAPen(rp, COLOR_HIGHLIGHT);
-    TightText(rp, SPEED_PANEL_X + 125, y, (CONST_STRPTR)buffer, -1, 4);
+    TightText(rp, SPEED_PANEL_X + 132, y, (CONST_STRPTR)buffer, -1, 4);
 
     /* Memory speeds header */
     y += 8;
