@@ -307,8 +307,8 @@ void enumerate_mmu_entries(void)
                 mmu_list.count++;
                 /* Get the mapping of the default context */
                 list = GetMapping(NULL);
-                for (mn = (struct MappingNode *)(list->mlh_Head);
-                     mn->map_succ && mmu_list.count < 256;
+                for (mn = list ? (struct MappingNode *)(list->mlh_Head) : NULL;
+                     mn && mn->map_succ && mmu_list.count < 256;
                      mn = mn->map_succ)
                 {
                     size_t pos;
@@ -446,6 +446,9 @@ void enumerate_mmu_entries(void)
                     entry = &mmu_list.entries[mmu_list.count];
                     snprintf(entry->name, sizeof(entry->name), "%s", buffer);
                     mmu_list.count++;
+                }
+                if (list) {
+                    ReleaseMapping(NULL, list);
                 }
                 /* Append hint entries at end of list */
                 if (mmu_list.count < 256 - 8) {
