@@ -52,7 +52,11 @@ const char *get_memory_type_string(UWORD attrs, APTR addr)
          * CPU-side fast RAM. */
         pos = snprintf(buffer, sizeof(buffer), "SLOW RAM");
     } else if (attrs & MEMF_FAST) {
-        if (address < 0x01000000) {
+        /* The DMA24 flag below already implies a 24-bit address; avoid
+         * two different 24-bit hints in one line (issue #26) */
+        if (attrs & MEMF_24BITDMA) {
+            pos = snprintf(buffer, sizeof(buffer), "FAST RAM");
+        } else if (address < 0x01000000) {
             pos = snprintf(buffer, sizeof(buffer), "FAST RAM (24bit)");
         } else {
             pos = snprintf(buffer, sizeof(buffer), "FAST RAM (32bit)");
@@ -72,7 +76,7 @@ const char *get_memory_type_string(UWORD attrs, APTR addr)
         pos += snprintf(buffer + pos, sizeof(buffer) - pos, ", KICK");
     }
     if (attrs & MEMF_24BITDMA) {
-        pos += snprintf(buffer + pos, sizeof(buffer) - pos, ", 24BitDMA");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, ", DMA24");
     }
 
     return buffer;
@@ -347,7 +351,8 @@ static void draw_memory_data(BOOL full_redraw)
     y += 10;
 
     /* Memory type */
-    draw_label_value(128, y, get_string(MSG_MEMORY_TYPE), region->type_string, 168);
+    draw_label_value_max(128, y, get_string(MSG_MEMORY_TYPE),
+                         region->type_string, 168, 618);
     y += 10;
 
     /* Priority */
@@ -386,7 +391,8 @@ static void draw_memory_data(BOOL full_redraw)
     y += 10;
 
     /* Node name */
-    draw_label_value(128, y, get_string(MSG_NODE_NAME), region->node_name, 168);
+    draw_label_value_max(128, y, get_string(MSG_NODE_NAME),
+                         region->node_name, 168, 618);
     y += 10;
 
     /* Memory speed - display in appropriate units */

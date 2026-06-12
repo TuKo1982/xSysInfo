@@ -920,20 +920,48 @@ void draw_text_centered(WORD x, WORD y, WORD width, const char *text, UBYTE colo
  * Draw label: value pair
  * If value is NULL, only the label is drawn
  */
-void draw_label_value(WORD x, WORD y, const char *label, const char *value, WORD offset)
+/*
+ * Draw text hard-clipped to max_width pixels using the current pens.
+ * Measures with TextLength() so it also clips when a font replacement
+ * system substitutes a wider font (issue #29).
+ */
+void draw_text_clipped(WORD x, WORD y, const char *text, WORD max_width)
+{
+    struct RastPort *rp = app->rp;
+    WORD len = strlen(text);
+
+    while (len > 0 &&
+           TextLength(rp, (CONST_STRPTR)text, len) > max_width) {
+        len--;
+    }
+    if (len > 0) {
+        Move(rp, x, y);
+        Text(rp, (CONST_STRPTR)text, len);
+    }
+}
+
+/*
+ * Draw a label/value pair with both parts clipped at the max_x column
+ * (typically the enclosing panel's inner right edge).
+ */
+void draw_label_value_max(WORD x, WORD y, const char *label,
+                          const char *value, WORD offset, WORD max_x)
 {
     struct RastPort *rp = app->rp;
 
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_PANEL_BG);
-    Move(rp, x, y);
-    Text(rp, (CONST_STRPTR)label, strlen(label));
+    draw_text_clipped(x, y, label, max_x - x);
 
     if (value) {
         SetAPen(rp, COLOR_HIGHLIGHT);
-        Move(rp, x + offset, y);
-        Text(rp, (CONST_STRPTR)value, strlen(value));
+        draw_text_clipped(x + offset, y, value, max_x - (x + offset));
     }
+}
+
+void draw_label_value(WORD x, WORD y, const char *label, const char *value, WORD offset)
+{
+    draw_label_value_max(x, y, label, value, offset, SCREEN_WIDTH - 4);
 }
 
 /* Forward declaration */
