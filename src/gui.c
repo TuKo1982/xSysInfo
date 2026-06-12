@@ -679,10 +679,10 @@ void draw_panel(WORD x, WORD y, WORD w, WORD h, const char *title)
 
         SetDrMd(rp, JAM1);
         SetAPen(rp, COLOR_TEXT);
-        Move(rp, x + 5, y + 11);
+        Move(rp, x + 5, y + h - 3);
         Text(rp, (CONST_STRPTR)title, title_len);
         SetAPen(rp, COLOR_HIGHLIGHT);
-        Move(rp, x + 4, y + 10);
+        Move(rp, x + 4, y + h - 4);
         Text(rp, (CONST_STRPTR)title, title_len);
         SetDrMd(rp, JAM2);
     }
@@ -989,8 +989,7 @@ static void update_software_list(void)
     SoftwareList *list;
     ULONG i;
     WORD y;
-    WORD list_top = SOFTWARE_PANEL_Y + 24;
-    WORD list_height = SOFTWARE_LIST_LINES * 8;
+    WORD list_top = SOFTWARE_PANEL_Y + 22;
     char buffer[128];
 
     /* Get current list */
@@ -1015,7 +1014,7 @@ static void update_software_list(void)
     SetAPen(rp, COLOR_PANEL_BG);
     RectFill(rp, SOFTWARE_PANEL_X + 2, list_top - 7,
              SOFTWARE_PANEL_X + SOFTWARE_PANEL_W - 16,
-             list_top + list_height - 5);
+             SOFTWARE_PANEL_Y + SOFTWARE_PANEL_H - 2);
 
     /* Update cycle button only if label changed */
     Button *cycle_btn = find_button(BTN_SOFTWARE_CYCLE);
@@ -1103,6 +1102,158 @@ static void update_software_list(void)
 }
 
 /*
+ * Map a dhrystone value to a bar width in pixels. Shared by the bars and
+ * the ruler ticks so both always agree, including the piecewise-linear
+ * Shrink mode. May return more than SPEED_BAR_MAX_WIDTH (overflow).
+ */
+static ULONG scale_bar_width(ULONG value, ULONG max_value)
+{
+    if (max_value == 0 || value == 0) return 0;
+
+    if (app->bar_scale == SCALE_EXPAND) {
+        /* Linear scale */
+        return (ULONG)(((unsigned long long)value * SPEED_BAR_MAX_WIDTH) / max_value);
+    } else {
+        /* Shrink mode: A3000 at 100% */
+        ULONG a4000_value = reference_systems[REF_A3000].dhrystones;
+        ULONG ref_width = SPEED_BAR_MAX_WIDTH;
+        if (value <= a4000_value) {
+            return (ULONG)(((unsigned long long)value * ref_width) / a4000_value);
+        }
+        return ref_width +
+            (ULONG)(((unsigned long long)(value - a4000_value) * ref_width) /
+            (max_value - a4000_value));
+    }
+}
+
+/*
+ * 3x5 micro digits for the ruler above the speed bars, like the original
+ * SysInfo ruler. Rows top to bottom, bits 2..0 = left to right.
+ * Index 10 is 'K' (thousands suffix).
+ */
+static const UBYTE micro_glyphs[11][5] = {
+    { 7, 5, 5, 5, 7 },  /* 0 */
+    { 2, 6, 2, 2, 7 },  /* 1 */
+    { 7, 1, 7, 4, 7 },  /* 2 */
+    { 7, 1, 7, 1, 7 },  /* 3 */
+    { 5, 5, 7, 1, 1 },  /* 4 */
+    { 7, 4, 7, 1, 7 },  /* 5 */
+    { 7, 4, 7, 5, 7 },  /* 6 */
+    { 7, 1, 1, 2, 2 },  /* 7 */
+    { 7, 5, 7, 5, 7 },  /* 8 */
+    { 7, 5, 7, 1, 7 },  /* 9 */
+    { 5, 6, 4, 6, 5 },  /* K */
+};
+
+static WORD draw_micro_glyph(WORD x, WORD y, int glyph)
+{
+    struct RastPort *rp = app->rp;
+    WORD row, col;
+
+    for (row = 0; row < 5; row++) {
+        UBYTE bits = micro_glyphs[glyph][row];
+        for (col = 0; col < 3; col++) {
+            if (bits & (4 >> col)) {
+                WritePixel(rp, x + col, y + row);
+            }
+        }
+    }
+    return x + 4;
+}
+
+static void draw_micro_number(WORD x, WORD y, ULONG value, BOOL kilo)
+{
+    char buf[12];
+    int i;
+
+    snprintf(buf, sizeof(buf), "%lu", (unsigned long)value);
+    for (i = 0; buf[i]; i++) {
+        x = draw_micro_glyph(x, y, buf[i] - '0');
+    }
+    if (kilo && value > 0) {
+        draw_micro_glyph(x, y, 10);
+    }
+}
+
+/*
+ * Draw the ruler band between the title strip and the first bar:
+ * one 5px row where micro-digit labels interrupt a dotted tick line,
+ * like the original SysInfo ruler.
+ */
+static void draw_speed_ruler(ULONG max_value)
+{
+    struct RastPort *rp = app->rp;
+    WORD x0 = SPEED_PANEL_X + 178;
+    WORD y = SPEED_PANEL_Y + 15;
+    ULONG lab_max, mag, q, step, v;
+    BOOL kilo;
+    WORD x;
+
+    /* Clear the band */
+    SetAPen(rp, COLOR_PANEL_BG);
+    RectFill(rp, x0 - 1, y, x0 + SPEED_BAR_MAX_WIDTH, y + 4);
+
+    if (max_value == 0) return;
+
+    /* Largest value still on the linear part of the scale */
+    if (app->bar_scale == SCALE_EXPAND) {
+        lab_max = max_value;
+    } else {
+        lab_max = reference_systems[REF_A3000].dhrystones;
+    }
+    if (lab_max == 0) return;
+
+    /* Nice 1-2-5 step giving roughly 4-7 labelled ticks */
+    mag = 1;
+    while (lab_max / mag >= 10) mag *= 10;
+    q = lab_max / mag;
+    if (q >= 8) {
+        step = 2 * mag;
+    } else if (q >= 4) {
+        step = mag;
+    } else {
+        step = mag / 2;
+    }
+    if (step == 0) step = 1;
+    kilo = (step >= 1000 && step % 1000 == 0);
+
+    SetDrMd(rp, JAM1);
+
+    /* Dotted baseline across the bar width */
+    SetAPen(rp, COLOR_BUTTON_DARK);
+    for (x = x0; x < x0 + SPEED_BAR_MAX_WIDTH; x += 4) {
+        WritePixel(rp, x, y + 4);
+    }
+
+    for (v = 0; ; v += step) {
+        ULONG w = scale_bar_width(v, max_value);
+        ULONG label = kilo ? v / 1000 : v;
+        char buf[12];
+        WORD label_w;
+
+        if (w >= SPEED_BAR_MAX_WIDTH) break;
+        x = x0 + (WORD)w;
+
+        /* Tick mark */
+        SetAPen(rp, COLOR_TEXT);
+        Move(rp, x, y + 2);
+        Draw(rp, x, y + 4);
+
+        /* Label to the right of the tick, interrupting the dotted line */
+        snprintf(buf, sizeof(buf), "%lu", (unsigned long)label);
+        label_w = strlen(buf) * 4 + ((kilo && label) ? 4 : 0);
+        if (x + 3 + label_w <= x0 + SPEED_BAR_MAX_WIDTH) {
+            SetAPen(rp, COLOR_PANEL_BG);
+            RectFill(rp, x + 2, y, x + 2 + label_w, y + 4);
+            SetAPen(rp, COLOR_TEXT);
+            draw_micro_number(x + 3, y, label, kilo);
+        }
+    }
+
+    SetDrMd(rp, JAM2);
+}
+
+/*
  * Draw single speed bar
  */
 void draw_single_bar(WORD x, WORD y, ULONG value, ULONG max_value, WORD color)
@@ -1121,21 +1272,7 @@ void draw_single_bar(WORD x, WORD y, ULONG value, ULONG max_value, WORD color)
 
     if (max_value == 0 || value == 0) return;
 
-    if (app->bar_scale == SCALE_EXPAND) {
-        /* Linear scale */
-        calculated_width = (ULONG)(((unsigned long long)value * SPEED_BAR_MAX_WIDTH) / max_value);
-    } else {
-        /* Shrink mode: A3000 at 100% */
-        ULONG a4000_value = reference_systems[REF_A3000].dhrystones;
-        ULONG ref_width = SPEED_BAR_MAX_WIDTH;
-        if (value <= a4000_value) {
-            calculated_width = (ULONG)(((unsigned long long)value * ref_width) / a4000_value);
-        } else {
-            calculated_width = ref_width +
-                (ULONG)(((unsigned long long)(value - a4000_value) * ref_width) /
-                (max_value - a4000_value));
-        }
-    }
+    calculated_width = scale_bar_width(value, max_value);
 
     /* Clamp to max width and flag values beyond the current scale */
     if (calculated_width > SPEED_BAR_MAX_WIDTH) {
@@ -1195,8 +1332,11 @@ static void refresh_speed_bars(void)
         max_value = a4000_value ? a4000_value * 2 : 1;
     }
 
+    /* Ruler above the bars, same scale mapping as the bars */
+    draw_speed_ruler(max_value);
+
     /* Redraw "You" bar */
-    y = SPEED_PANEL_Y + 22;
+    y = SPEED_PANEL_Y + 26;
     if (bench_results.benchmarks_valid) {
         cur_value = bench_results.dhrystones;
     } else {
@@ -1235,8 +1375,8 @@ static void draw_speed_panel(void)
     draw_panel(SPEED_PANEL_X + 1, SPEED_PANEL_Y + 1,
                SPEED_PANEL_W - 2, 14, get_string(MSG_SPEED_COMPARISONS));
 
-    /* Draw "You" entry first */
-    y = SPEED_PANEL_Y + 22;
+    /* Draw "You" entry first (below the ruler band) */
+    y = SPEED_PANEL_Y + 26;
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_PANEL_BG);
     Move(rp, SPEED_PANEL_X + 4, y);

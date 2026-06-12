@@ -83,12 +83,12 @@ typedef struct {
 #define SOFTWARE_PANEL_X    0
 #define SOFTWARE_PANEL_Y    24
 #define SOFTWARE_PANEL_W    366
-#define SOFTWARE_PANEL_H    77
+#define SOFTWARE_PANEL_H    74
 
 #define SPEED_PANEL_X       0
-#define SPEED_PANEL_Y       102
+#define SPEED_PANEL_Y       98
 #define SPEED_PANEL_W       366
-#define SPEED_PANEL_H       98
+#define SPEED_PANEL_H       102
 
 #define HARDWARE_PANEL_X    368
 #define HARDWARE_PANEL_Y    24
