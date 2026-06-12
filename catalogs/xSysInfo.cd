@@ -774,3 +774,8 @@ Ux=UserX SW=Swapped MAP=Remapped BN=Bundled
 MSG_MMU_FLAGS7_HINT (//)
 IND=Indirect +=more flags
 ;
+; A1000 86-pin edge connector (predates Zorro II)
+;
+MSG_SLOT_ZORRO (//)
+ZORRO
+;

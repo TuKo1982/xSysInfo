@@ -633,6 +633,8 @@ void detect_chipset(void)
                 tmp = *((volatile UWORD *)(CUSTOM_AGNUS_ID_MIRR));
                 tmp &= 0X7F00; //mask Bit 14-8
                 tmp = (tmp>>8); //shift to lower byte
+                debug("    chipset: OCS Agnus rev=$%02lx mirror=$%02lx\n",
+                      (ULONG)hw_info.agnus_rev, (ULONG)tmp);
                 if (hw_info.agnus_rev == tmp)
                     hw_info.agnus_type = AGNUS_OCS_PAL;
                 else
@@ -644,6 +646,8 @@ void detect_chipset(void)
                 tmp = *((volatile UWORD *)(CUSTOM_AGNUS_ID_MIRR));
                 tmp &= 0X7F00; //mask Bit 14-8
                 tmp = (tmp>>8); //shift to lower byte
+                debug("    chipset: OCS Agnus rev=$%02lx mirror=$%02lx\n",
+                      (ULONG)hw_info.agnus_rev, (ULONG)tmp);
                 if (hw_info.agnus_rev == tmp)
                     hw_info.agnus_type = AGNUS_OCS_NTSC;
                 else
@@ -995,6 +999,18 @@ void detect_gary(void)
         testVal2 = *((volatile UWORD *)(CUSTOM_JOY1DAT_MIRR));
         if (testVal1 == testVal2) {
             hw_info.gary_type = GARY_A1000;
+            /* An A1000 always has a DIP Agnus; the VPOSR mirror test in
+             * detect_chipset() can misread Fat Agnus on accelerated
+             * machines (issue #26). Note this also matches the German
+             * A2000-A, which uses the same DIP chipset. */
+            if (hw_info.agnus_type == AGNUS_OCS_FAT_NTSC) {
+                hw_info.agnus_type = AGNUS_OCS_NTSC;
+                debug("    systemchips: A1000 Gary, correcting Agnus to DIP NTSC\n");
+            }
+            if (hw_info.agnus_type == AGNUS_OCS_FAT_PAL) {
+                hw_info.agnus_type = AGNUS_OCS_PAL;
+                debug("    systemchips: A1000 Gary, correcting Agnus to DIP PAL\n");
+            }
             return;
         }
     }
@@ -1097,8 +1113,16 @@ void detect_system_chips(void)
 
     /* A500/A1000/A2000/CDTV*/
     hw_info.has_zorro_slots = TRUE;
-    snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
-             "%s", get_string(MSG_ZORRO_II));
+    if (hw_info.gary_type == GARY_A1000) {
+        /* The A1000 86-pin edge connector predates Zorro II; show plain
+         * ZORRO (issue #26). The German A2000-A is mislabelled by this
+         * (same chipset, real Zorro II slots), accepted as a corner case. */
+        snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
+                 "%s", get_string(MSG_SLOT_ZORRO));
+    } else {
+        snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
+                 "%s", get_string(MSG_ZORRO_II));
+    }
     return;
 }
 

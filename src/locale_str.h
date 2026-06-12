@@ -299,6 +299,7 @@ typedef enum {
     MSG_MMU_FLAGS5_HINT,
     MSG_MMU_FLAGS6_HINT,
     MSG_MMU_FLAGS7_HINT,
+    MSG_SLOT_ZORRO,
     MSG_COUNT  /* Total number of strings */
 } LocaleStringID;
 

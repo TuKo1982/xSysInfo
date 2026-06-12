@@ -730,3 +730,6 @@ Ux=UtilX SW=Trocado MAP=Remapeado BN=Agrupado
 MSG_MMU_FLAGS7_HINT
 IND=Indireto +=mais flags
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

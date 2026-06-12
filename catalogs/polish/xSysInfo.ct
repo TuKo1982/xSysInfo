@@ -776,3 +776,6 @@ Ux=UserX SW=Swap MAP=Mapowane BN=Bundled
 MSG_MMU_FLAGS7_HINT
 IND=Posrednie +=wiecej flag
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

@@ -776,3 +776,6 @@ Ux=UserX SW=Takas MAP=YenidenMap BN=Paket
 MSG_MMU_FLAGS7_HINT
 IND=Dolayli +=daha fazla bayrak
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

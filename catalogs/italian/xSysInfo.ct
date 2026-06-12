@@ -776,3 +776,6 @@ Ux=UserX SW=Scambiato MAP=Rimappato BN=Bundled
 MSG_MMU_FLAGS7_HINT
 IND=Indiretto +=altri flag
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

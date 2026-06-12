@@ -310,6 +310,7 @@ static const char *default_strings[MSG_COUNT] = {
     /* MSG_MMU_FLAGS5_HINT */        "SNG=Single Page RP=Repairable IO=IOspace",
     /* MSG_MMU_FLAGS6_HINT */        "Ux=UserX SW=Swapped MAP=Remapped BN=Bundled",
     /* MSG_MMU_FLAGS7_HINT */        "IND=Indirect +=more flags",
+    /* MSG_SLOT_ZORRO */             "ZORRO",
 
 };
 

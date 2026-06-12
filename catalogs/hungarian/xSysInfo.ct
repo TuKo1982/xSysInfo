@@ -776,3 +776,6 @@ Ux=UserX SW=Cserélt MAP=Áthelyezett BN=Kötegelt
 MSG_MMU_FLAGS7_HINT
 IND=Közvetett +=több jelzö
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

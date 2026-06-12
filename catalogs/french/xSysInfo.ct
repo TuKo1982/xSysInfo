@@ -776,3 +776,6 @@ Ux=UserX SW=Swappe MAP=Remappe BN=Groupe
 MSG_MMU_FLAGS7_HINT
 IND=Indirect +=autres flags
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

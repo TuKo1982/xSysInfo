@@ -776,3 +776,6 @@ Ux=UserX SW=Swap MAP=Umgelegt BN=Geb.
 MSG_MMU_FLAGS7_HINT
 IND=Indirekt +=mehr Flags
 ;
+MSG_SLOT_ZORRO
+ZORRO
+;

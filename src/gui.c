@@ -1676,7 +1676,9 @@ static void draw_hardware_panel(void)
                          hw_info.fpu_string, mhz_buf, get_string(MSG_OFF));
             }
         } else {
-            if (hw_info.fpu_enabled) {
+            /* The (Off) suffix only makes sense when an FPU is present;
+             * a plain 68000 has nothing to switch off (issue #26) */
+            if (hw_info.fpu_enabled || hw_info.fpu_type == FPU_NONE) {
                 snprintf(buffer, sizeof(buffer), "%s",
                          hw_info.fpu_string);
             } else {
