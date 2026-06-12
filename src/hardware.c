@@ -60,6 +60,8 @@ BOOL detect_hardware(void)
     detect_fpu();
     debug("  hw: Detecting MMU...\n");
     detect_mmu();
+    debug("  hw: Loading MMU remap table...\n");
+    load_mmu_remap_table();
     debug("  hw: Reading VBR...\n");
     read_vbr();
     debug("  hw: Detecting chipset...\n");
@@ -541,6 +543,72 @@ void detect_mmu(void)
             }
         }
     }
+}
+
+/*
+ * MMU remap table: logical address ranges the MMU redirects to other
+ * physical memory (MAPP_REMAPPED), e.g. mufastzero moving page zero and
+ * ExecBase to fast RAM. Snapshotted once at startup; boot-time
+ * remappings do not change while we run. (issue #44)
+ */
+#define MAX_REMAP_RANGES 16
+static struct {
+    ULONG lower;
+    ULONG higher;
+    LONG  delta;
+} remap_ranges[MAX_REMAP_RANGES];
+static ULONG remap_count = 0;
+
+void load_mmu_remap_table(void)
+{
+    struct MinList *list;
+    struct MappingNode *mn;
+
+    remap_count = 0;
+
+    if (!hw_info.mmu_enabled)
+        return;
+
+    MMUBase = (struct Library *)OpenLibrary((CONST_STRPTR)"mmu.library", 40L);
+    if (!MMUBase)
+        return;
+
+    list = GetMapping(NULL);
+    if (list) {
+        for (mn = (struct MappingNode *)(list->mlh_Head);
+             mn->map_succ && remap_count < MAX_REMAP_RANGES;
+             mn = mn->map_succ) {
+            if (mn->map_Properties & MAPP_REMAPPED) {
+                remap_ranges[remap_count].lower = mn->map_Lower;
+                remap_ranges[remap_count].higher = mn->map_Higher;
+                remap_ranges[remap_count].delta = (LONG)mn->map_un.map_Delta;
+                debug("  hw: MMU remap $%08lx-$%08lx -> $%08lx\n",
+                      (ULONG)mn->map_Lower, (ULONG)mn->map_Higher,
+                      (ULONG)(mn->map_Lower + mn->map_un.map_Delta));
+                remap_count++;
+            }
+        }
+        ReleaseMapping(NULL, list);
+    }
+    CloseLibrary((struct Library *)MMUBase);
+}
+
+/*
+ * Translate a logical address to its physical location. Returns the
+ * input address unchanged when no MMU remapping applies.
+ */
+APTR mmu_physical_address(APTR addr)
+{
+    ULONG address = (ULONG)addr;
+    ULONG i;
+
+    for (i = 0; i < remap_count; i++) {
+        if (address >= remap_ranges[i].lower &&
+            address <= remap_ranges[i].higher) {
+            return (APTR)(address + remap_ranges[i].delta);
+        }
+    }
+    return addr;
 }
 
 /*

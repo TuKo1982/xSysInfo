@@ -274,6 +274,8 @@ BOOL detect_emu68_systems(void);
 void detect_cpu(void);
 void detect_fpu(void);
 void detect_mmu(void);
+void load_mmu_remap_table(void);
+APTR mmu_physical_address(APTR addr);
 void read_vbr(void);
 void detect_chipset(void);
 void detect_clock(void);

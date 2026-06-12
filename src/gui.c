@@ -1729,8 +1729,18 @@ static void draw_hardware_panel(void)
                          get_string(MSG_MMU), buffer, 80);
         y += 8;
 
-        /* VBR */
-        snprintf(buffer, sizeof(buffer), "$%08lX", (unsigned long)hw_info.vbr);
+        /* VBR - annotate the physical location when MMU-remapped */
+        {
+            APTR vbr_phys = mmu_physical_address((APTR)hw_info.vbr);
+            if (vbr_phys != (APTR)hw_info.vbr) {
+                snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
+                         (unsigned long)hw_info.vbr,
+                         get_location_string(determine_mem_location(vbr_phys)));
+            } else {
+                snprintf(buffer, sizeof(buffer), "$%08lX",
+                         (unsigned long)hw_info.vbr);
+            }
+        }
         draw_label_value(HARDWARE_PANEL_X + 4, y,
                          get_string(MSG_VBR), buffer, 80);
         y += 8;

@@ -141,7 +141,9 @@ void enumerate_libraries(void)
         entry->address = (APTR)lib;
         entry->version = lib->lib_Version;
         entry->revision = lib->lib_Revision;
-        entry->location = determine_mem_location((APTR)lib);
+        /* Classify by physical location; the base address can be
+         * MMU-remapped to other memory (issue #44) */
+        entry->location = determine_mem_location(mmu_physical_address((APTR)lib));
 
         libraries_list.count++;
     }
@@ -230,7 +232,7 @@ void enumerate_devices(void)
         entry->address = (APTR)dev;
         entry->version = dev->dd_Library.lib_Version;
         entry->revision = dev->dd_Library.lib_Revision;
-        entry->location = determine_mem_location((APTR)dev);
+        entry->location = determine_mem_location(mmu_physical_address((APTR)dev));
 
         devices_list.count++;
     }
@@ -274,7 +276,7 @@ void enumerate_resources(void)
         entry->address = (APTR)res;
         entry->version = res->lib_Version;
         entry->revision = res->lib_Revision;
-        entry->location = determine_mem_location((APTR)res);
+        entry->location = determine_mem_location(mmu_physical_address((APTR)res));
 
         resources_list.count++;
     }

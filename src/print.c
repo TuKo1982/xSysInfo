@@ -213,7 +213,17 @@ void export_hardware(BPTR fh)
     }
     write_formatted(fh, "%-16s %s", "MMU:", buffer);
 
-    snprintf(buffer, sizeof(buffer), "$%08lX", (unsigned long)hw_info.vbr);
+    {
+        APTR vbr_phys = mmu_physical_address((APTR)hw_info.vbr);
+        if (vbr_phys != (APTR)hw_info.vbr) {
+            snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
+                     (unsigned long)hw_info.vbr,
+                     get_location_string(determine_mem_location(vbr_phys)));
+        } else {
+            snprintf(buffer, sizeof(buffer), "$%08lX",
+                     (unsigned long)hw_info.vbr);
+        }
+    }
     write_formatted(fh, "%-16s %s", "VBR:", buffer);
 
     write_formatted(fh, "%-16s %s", "Comment:", hw_info.comment);
