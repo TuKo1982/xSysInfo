@@ -2374,14 +2374,23 @@ BOOL show_filename_requester(const char *title, char *filename, ULONG filename_s
         WaitPort(app->window->UserPort);
 
         while ((msg = (struct IntuiMessage *)
-                GetMsg(app->window->UserPort)) != NULL && running) {
+                GetMsg(app->window->UserPort)) != NULL) {
 
             ULONG class = msg->Class;
             UWORD code = msg->Code;
             WORD mx = msg->MouseX;
             WORD my = msg->MouseY;
 
+            if (!app->use_custom_screen) {
+                mx -= app->window->BorderLeft;
+                my -= app->window->BorderTop;
+            }
+
             ReplyMsg((struct Message *)msg);
+
+            if (!running) {
+                continue;
+            }
 
             switch (class) {
                 case IDCMP_MOUSEBUTTONS:
