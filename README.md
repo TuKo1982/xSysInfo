@@ -1,6 +1,6 @@
 # xSysInfo
 
-![XSysInfo](docs/xsysinfo-v0.2a.png)
+![XSysInfo](docs/xsysinfo.png)
 
 `xSysInfo` is a comprehensive system information utility designed for AmigaOS. It provides detailed insights into your Amiga system's hardware and software configuration, along with benchmarking capabilities.
 

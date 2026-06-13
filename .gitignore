@@ -11,3 +11,5 @@ xsysinfo-*.lha
 
 /src/*.hunk
 /extern/
+
+**/.DS_Store
