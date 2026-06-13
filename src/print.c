@@ -34,10 +34,24 @@ extern MemoryRegionList memory_regions;
 extern BoardList board_list;
 extern DriveList drive_list;
 
+static BOOL export_write_failed;
+
+static void write_export_bytes(BPTR fh, const char *str, LONG len)
+{
+    if (len <= 0) {
+        return;
+    }
+
+    if (Write(fh, (const char *)str, len) != len) {
+        export_write_failed = TRUE;
+    }
+}
+
 /* Helper macro for writing to file */
 #define WRITE_LINE(fh, str) do { \
-    Write(fh, (const char *)str, strlen((const char *)str)); \
-    Write(fh, (const char *)"\n", 1); \
+    write_export_bytes(fh, (const char *)str, \
+                       (LONG)strlen((const char *)str)); \
+    write_export_bytes(fh, (const char *)"\n", 1); \
 } while (0)
 
 /*
@@ -49,7 +63,10 @@ static void write_formatted(BPTR fh, const char *format, ...)
     va_list args;
 
     va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
+    if (vsnprintf(buffer, sizeof(buffer), format, args) < 0) {
+        buffer[0] = '\0';
+        export_write_failed = TRUE;
+    }
     va_end(args);
 
     WRITE_LINE(fh, (STRPTR)buffer);
@@ -510,6 +527,8 @@ BOOL export_to_file(const char *filename)
         return FALSE;
     }
 
+    export_write_failed = FALSE;
+
     export_header(fh);
     export_hardware(fh);
     export_software(fh);
@@ -524,5 +543,5 @@ BOOL export_to_file(const char *filename)
 
     Close(fh);
 
-    return TRUE;
+    return !export_write_failed;
 }

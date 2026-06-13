@@ -17,6 +17,7 @@
 #include <proto/exec.h>
 #include <proto/graphics.h>
 #include <proto/intuition.h>
+#include <proto/dos.h>
 
 #include "xsysinfo.h"
 #include "gui.h"
@@ -88,6 +89,7 @@ static void clear_buttons(void);
 static void update_software_list(void);
 static void update_hardware_text(void);
 static void refresh_all_cache_buttons(void);
+static void show_timed_overlay(const char *message, ULONG ticks);
 
 void format_scaled(char *buffer, size_t size, ULONG value_x100, BOOL round)
 {
@@ -363,7 +365,9 @@ void main_view_handle_button(ButtonID id)
 
                 if (show_filename_requester(
                         get_string(MSG_ENTER_FILENAME), filename, sizeof(filename))) {
-                    export_to_file(filename);
+                    if (!export_to_file(filename)) {
+                        show_timed_overlay("Export failed", 100);
+                    }
                 }
             }
             break;
@@ -2032,6 +2036,30 @@ static void refresh_all_cache_buttons(void)
 
     /* Redraw all cache buttons */
     draw_cache_buttons();
+}
+
+static void show_timed_overlay(const char *message, ULONG ticks)
+{
+    struct RastPort *rp = app->rp;
+    WORD text_len = strlen(message);
+    WORD dialog_w = (text_len * 8) + 32;
+    WORD dialog_h = 28;
+    WORD dialog_x = (SCREEN_WIDTH - dialog_w) / 2;
+    WORD dialog_y = (app->screen_height - dialog_h) / 2;
+
+    SetAPen(rp, COLOR_BAR_YOU);
+    RectFill(rp, dialog_x, dialog_y,
+             dialog_x + dialog_w - 1, dialog_y + dialog_h - 1);
+
+    draw_3d_box(dialog_x, dialog_y, dialog_w, dialog_h, FALSE);
+
+    SetAPen(rp, COLOR_BUTTON_LIGHT);
+    SetBPen(rp, COLOR_BAR_YOU);
+    Move(rp, dialog_x + (dialog_w - text_len * 8) / 2, dialog_y + 16);
+    Text(rp, (CONST_STRPTR)message, text_len);
+
+    Delay(ticks);
+    redraw_current_view();
 }
 
 /*
