@@ -5,7 +5,7 @@
 
 ADATE   := $(shell date '+%-d.%-m.%Y')
 # FULL_VERSION is 42.xx-yy-dirty
-FULL_VERSION ?= $(shell git describe --tags --dirty | sed -r 's/^release_//')
+FULL_VERSION ?= $(shell git describe --tags --dirty | sed -E 's/^release_//; s/^v//')
 PROG_VERSION := $(shell echo $(FULL_VERSION) | cut -f1 -d\.)
 PROG_REVISION := $(shell echo $(FULL_VERSION) | cut -f2 -d\.|cut -f1 -d\-)
 

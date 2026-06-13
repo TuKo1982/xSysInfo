@@ -3,7 +3,7 @@ name: A4091 Draft Release
 on:
   push:
     tags:
-      - "release_*"
+      - "v*"
   workflow_dispatch:
 
 permissions:

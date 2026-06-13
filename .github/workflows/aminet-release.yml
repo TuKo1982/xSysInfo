@@ -1,0 +1,81 @@
+name: Publish Aminet release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Aminet upload
+    if: ${{ !github.event.release.prerelease && startsWith(github.event.release.tag_name, 'v') }}
+    runs-on: ubuntu-latest
+    container: stefanreinauer/amiga-gcc:gcc-v13.3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Mark git directory as safe
+        run: git config --global --add safe.directory '*'
+
+      - name: Build all artifacts
+        run: make all
+
+      - name: Prepare Aminet upload files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          mapfile -t lha_files < <(
+            find . -maxdepth 1 -type f -name 'xsysinfo-*.lha' -printf '%f\n' | sort
+          )
+
+          if [ "${#lha_files[@]}" -ne 1 ]; then
+            echo "::error::Expected one xsysinfo-*.lha archive, found ${#lha_files[@]}"
+            printf '%s\n' "${lha_files[@]}"
+            exit 1
+          fi
+
+          cp "${lha_files[0]}" dist/xSysInfo.lha
+          cp xSysInfo.readme dist/xSysInfo.readme
+
+      - name: Upload Aminet artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aminet-upload
+          path: |
+            dist/xSysInfo.lha
+            dist/xSysInfo.readme
+          if-no-files-found: error
+
+  publish:
+    name: Upload to Aminet
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Aminet artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aminet-upload
+          path: dist
+
+      - name: Upload to Aminet
+        id: aminet
+        uses: sidick/aminet-release-action@v1
+        with:
+          filename: dist/xSysInfo.lha
+          readme: dist/xSysInfo.readme
+          category: util/moni
+          inject-version: true
