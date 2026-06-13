@@ -11,6 +11,7 @@
 #include <exec/execbase.h>
 #include <exec/memory.h>
 #include <devices/timer.h>
+#include <hardware/cia.h>
 
 #include <proto/exec.h>
 #include <proto/timer.h>
@@ -178,6 +179,27 @@ BOOL benchmark_timer_available(void)
     return TimerBase != NULL;
 }
 
+/*
+ * CIAA time-of-day counter, used as a Kickstart 1.3 timing fallback.
+ * CIAA TOD is a free-running 24-bit counter the OS clocks at the 50/60 Hz
+ * vblank tick; reading it needs neither ReadEClock nor GetSysTime, both of
+ * which are V36+.
+ */
+#define CIAA_BASE ((volatile struct CIA *)0xBFE001)
+
+static ULONG read_ciaa_tod(void)
+{
+    ULONG hi, mid, lo;
+
+    /* 8520 latch protocol: reading the high byte freezes all three TOD
+     * registers, reading the low byte releases them, so the 24-bit value
+     * is coherent even if it advances mid-read. */
+    hi  = CIAA_BASE->ciatodhi;
+    mid = CIAA_BASE->ciatodmid;
+    lo  = CIAA_BASE->ciatodlow;
+    return (hi << 16) | (mid << 8) | lo;
+}
+
 ULONG read_benchmark_clock(struct EClockVal *val)
 {
     if (!val || !TimerBase) {
@@ -188,13 +210,28 @@ ULONG read_benchmark_clock(struct EClockVal *val)
         return ReadEClock(val);
     }
 
+    if (SysBase->LibNode.lib_Version >= 36) {
+        /*
+         * GetSysTime() is a V36+ timer.device call. timeval and EClockVal
+         * share the same two ULONG fields, so the diff helper below can
+         * reuse them; returning 0 selects its microsecond path.
+         */
+        GetSysTime((struct timeval *)val);
+        return 0;
+    }
+
     /*
-     * GetSysTime() provides the Kick 1.3-safe fallback. timeval and
-     * EClockVal share the same two ULONG fields, so we can reuse the
-     * existing diff helper below.
+     * Kickstart 1.3 has neither ReadEClock nor GetSysTime. Fall back to
+     * the CIAA time-of-day counter. It only advances at the 50/60 Hz
+     * vblank rate, so resolution is coarse, but the benchmark loops
+     * escalate their iteration counts until an interval spans several
+     * ticks. Returning the tick frequency lets EClock_Diff_in_ms scale to
+     * microseconds; if the counter never advances the diff is zero and the
+     * callers fall back to their CPU-type estimates.
      */
-    GetSysTime((struct timeval *)val);
-    return 0;
+    val->ev_hi = 0;
+    val->ev_lo = read_ciaa_tod();
+    return hw_info.is_pal ? 50 : 60;
 }
 
 /*
@@ -470,6 +507,7 @@ uint64_t get_timer_ticks(void)
     struct timeval tv;
 
     if (!TimerBase) return 0;
+    if (SysBase->LibNode.lib_Version < 36) return 0;  /* GetSysTime is V36+ */
 
     GetSysTime(&tv);
 
@@ -483,6 +521,7 @@ uint64_t get_timer_ticks(void)
 void get_timer(struct timeval *tv)
 {
     if (!TimerBase) return;
+    if (SysBase->LibNode.lib_Version < 36) return;  /* GetSysTime is V36+ */
 
     GetSysTime(tv);
 }
