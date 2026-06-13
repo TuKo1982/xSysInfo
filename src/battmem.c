@@ -79,6 +79,9 @@ BOOL readBattMem(BattMemData* dest)//returns false on error
         if (!ReadBattMem (&Data, BATTMEM_SCSI_LUNS_ADDR, BATTMEM_SCSI_LUNS_LEN)) {
             dest->scan_luns = (Data & 1);
         }
+        else {
+            result = FALSE;
+        }
 
         /* Synchronous transfer enabled? */
         if (!ReadBattMem (&Data, BATTMEM_SCSI_SYNC_XFER_ADDR, BATTMEM_SCSI_SYNC_XFER_LEN)) {
@@ -128,29 +131,41 @@ BOOL writeBattMem(BattMemData* src) //returns false on error
 
         /* Long or short timeouts? */
         Data = src->long_timeout ? 1 : 0;
-        result &= WriteBattMem (&Data, BATTMEM_SCSI_TIMEOUT_ADDR, BATTMEM_SCSI_TIMEOUT_LEN);
+        if (WriteBattMem (&Data, BATTMEM_SCSI_TIMEOUT_ADDR, BATTMEM_SCSI_TIMEOUT_LEN)) {
+            result = FALSE;
+        }
 
         /* Scan LUNs? */
         Data = src->scan_luns ? 1 : 0;
-        result &= WriteBattMem (&Data, BATTMEM_SCSI_LUNS_ADDR, BATTMEM_SCSI_LUNS_LEN);
+        if (WriteBattMem (&Data, BATTMEM_SCSI_LUNS_ADDR, BATTMEM_SCSI_LUNS_LEN)) {
+            result = FALSE;
+        }
 
         /* Synchronous transfer enabled? */
         Data = src->sync_transfer ? 1 : 0;
-        result &= WriteBattMem (&Data, BATTMEM_SCSI_SYNC_XFER_ADDR, BATTMEM_SCSI_SYNC_XFER_LEN);
+        if (WriteBattMem (&Data, BATTMEM_SCSI_SYNC_XFER_ADDR, BATTMEM_SCSI_SYNC_XFER_LEN)) {
+            result = FALSE;
+        }
 
         /* Fast synchronous transfer enabled? */
         Data = src->fast_sync_transfer ? 1 : 0;
-        result &= WriteBattMem (&Data, BATTMEM_SCSI_FAST_SYNC_ADDR, BATTMEM_SCSI_FAST_SYNC_LEN);
+        if (WriteBattMem (&Data, BATTMEM_SCSI_FAST_SYNC_ADDR, BATTMEM_SCSI_FAST_SYNC_LEN)) {
+            result = FALSE;
+        }
 
 
         /* SCSI-2 tagged queuing enabled? */
         Data = src->tagged_queuing ? 1 : 0;
-        result &= WriteBattMem (&Data, BATTMEM_SCSI_TAG_QUEUES_ADDR, BATTMEM_SCSI_TAG_QUEUES_LEN);
+        if (WriteBattMem (&Data, BATTMEM_SCSI_TAG_QUEUES_ADDR, BATTMEM_SCSI_TAG_QUEUES_LEN)) {
+            result = FALSE;
+        }
 
         /* Show SCSI host ID. */
         if (src->scsi_id < 8) {
             Data = src->scsi_id ^ 7;
-            WriteBattMem (&Data, BATTMEM_SCSI_HOST_ID_ADDR, BATTMEM_SCSI_HOST_ID_LEN);
+            if (WriteBattMem (&Data, BATTMEM_SCSI_HOST_ID_ADDR, BATTMEM_SCSI_HOST_ID_LEN)) {
+                result = FALSE;
+            }
         }
         else {
             /*What should we doo if a wrong ID is provided?*/
@@ -159,9 +174,13 @@ BOOL writeBattMem(BattMemData* src) //returns false on error
         /* If write was successfull: reset amnesia on the both sides */
         if (result) {
             Data = 1;
-            WriteBattMem (&Data, BATTMEM_AMIGA_AMNESIA_ADDR, BATTMEM_AMIGA_AMNESIA_LEN);
+            if (WriteBattMem (&Data, BATTMEM_AMIGA_AMNESIA_ADDR, BATTMEM_AMIGA_AMNESIA_LEN)) {
+                result = FALSE;
+            }
             Data = 1;
-            WriteBattMem (&Data, BATTMEM_SHARED_AMNESIA_ADDR, BATTMEM_SHARED_AMNESIA_LEN);
+            if (WriteBattMem (&Data, BATTMEM_SHARED_AMNESIA_ADDR, BATTMEM_SHARED_AMNESIA_LEN)) {
+                result = FALSE;
+            }
         }
 
         ReleaseBattSemaphore ();
