@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <exec/execbase.h>
 #include <exec/libraries.h>
@@ -59,6 +60,33 @@ static void copy_base_name(char *dest, const char *src, size_t destsize)
         /* No dot found, copy entire string */
         copy_string(dest, src, destsize);
     }
+}
+
+static size_t append_format(char *buffer, size_t buffer_size, size_t pos,
+                            const char *format, ...)
+{
+    va_list args;
+    int written;
+
+    if (buffer_size == 0) {
+        return 0;
+    }
+
+    if (pos >= buffer_size) {
+        buffer[buffer_size - 1] = '\0';
+        return buffer_size - 1;
+    }
+
+    va_start(args, format);
+    written = vsnprintf(buffer + pos, buffer_size - pos, format, args);
+    va_end(args);
+
+    if (written < 0 || (size_t)written >= buffer_size - pos) {
+        buffer[buffer_size - 1] = '\0';
+        return buffer_size - 1;
+    }
+
+    return pos + (size_t)written;
 }
 
 /* Comparison function for sorting */
@@ -315,134 +343,135 @@ void enumerate_mmu_entries(void)
                 {
                     size_t pos;
                     memset(buffer, 0, sizeof(buffer));
-                    pos = snprintf(buffer, sizeof(buffer), "%08lx-%08lx",
-                                   (unsigned long)mn->map_Lower,
-                                   (unsigned long)mn->map_Higher);
+                    pos = append_format(buffer, sizeof(buffer), 0,
+                                        "%08lx-%08lx",
+                                        (unsigned long)mn->map_Lower,
+                                        (unsigned long)mn->map_Higher);
                     if (mn->map_Properties & MAPP_WINDOW)
                     {
-                        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                        " Window %08lx",
-                                        (unsigned long)mn->map_un.map_UserData);
+                        pos = append_format(buffer, sizeof(buffer), pos,
+                                            " Window %08lx",
+                                            (unsigned long)mn->map_un.map_UserData);
                         /* All other flags do not care then */
                     }
                     else {
                         if (mn->map_Properties & MAPP_WRITEPROTECTED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " WP");
+                            pos = append_format(buffer, sizeof(buffer), pos, " WP");
                         }
 
                         if (mn->map_Properties & MAPP_USED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " U");
+                            pos = append_format(buffer, sizeof(buffer), pos, " U");
                         }
 
                         if (mn->map_Properties & MAPP_MODIFIED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " M");
+                            pos = append_format(buffer, sizeof(buffer), pos, " M");
                         }
 
                         if (mn->map_Properties & MAPP_GLOBAL) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " G");
+                            pos = append_format(buffer, sizeof(buffer), pos, " G");
                         }
 
                         if (mn->map_Properties & MAPP_TRANSLATED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " TT");
+                            pos = append_format(buffer, sizeof(buffer), pos, " TT");
                         }
 
                         if (mn->map_Properties & MAPP_ROM) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " ROM");
+                            pos = append_format(buffer, sizeof(buffer), pos, " ROM");
                         }
 
                         if (mn->map_Properties & MAPP_USERPAGE0) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " UP0");
+                            pos = append_format(buffer, sizeof(buffer), pos, " UP0");
                         }
 
                         if (mn->map_Properties & MAPP_USERPAGE1) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " UP1");
+                            pos = append_format(buffer, sizeof(buffer), pos, " UP1");
                         }
 
                         if (mn->map_Properties & MAPP_CACHEINHIBIT) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " CI");
+                            pos = append_format(buffer, sizeof(buffer), pos, " CI");
                         }
 
                         if (mn->map_Properties & MAPP_IMPRECISE) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " IM");
+                            pos = append_format(buffer, sizeof(buffer), pos, " IM");
                         }
 
                         if (mn->map_Properties & MAPP_NONSERIALIZED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " NS");
+                            pos = append_format(buffer, sizeof(buffer), pos, " NS");
                         }
 
                         if (mn->map_Properties & MAPP_COPYBACK) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " CB");
+                            pos = append_format(buffer, sizeof(buffer), pos, " CB");
                         }
 
                         if (mn->map_Properties & MAPP_SUPERVISORONLY) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " SO");
+                            pos = append_format(buffer, sizeof(buffer), pos, " SO");
                         }
 
                         if (mn->map_Properties & MAPP_BLANK) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " BL");
+                            pos = append_format(buffer, sizeof(buffer), pos, " BL");
                         }
 
                         if (mn->map_Properties & MAPP_SHARED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " SH");
+                            pos = append_format(buffer, sizeof(buffer), pos, " SH");
                         }
 
                         if (mn->map_Properties & MAPP_SINGLEPAGE) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " SNG");
+                            pos = append_format(buffer, sizeof(buffer), pos, " SNG");
                         }
 
                         if (mn->map_Properties & MAPP_REPAIRABLE) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " RP");
+                            pos = append_format(buffer, sizeof(buffer), pos, " RP");
                         }
 
                         if (mn->map_Properties & MAPP_IO) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " IO");
+                            pos = append_format(buffer, sizeof(buffer), pos, " IO");
                         }
 
                         if (mn->map_Properties & MAPP_USER0) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " U0");
+                            pos = append_format(buffer, sizeof(buffer), pos, " U0");
                         }
 
                         if (mn->map_Properties & MAPP_USER1) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " U1");
+                            pos = append_format(buffer, sizeof(buffer), pos, " U1");
                         }
 
                         if (mn->map_Properties & MAPP_USER2) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " U2");
+                            pos = append_format(buffer, sizeof(buffer), pos, " U2");
                         }
 
                         if (mn->map_Properties & MAPP_USER3) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos, " U3");
+                            pos = append_format(buffer, sizeof(buffer), pos, " U3");
                         }
 
                         if (mn->map_Properties & MAPP_INVALID) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                            " INV %08lx",
-                                            (unsigned long)mn->map_un.map_UserData);
+                            pos = append_format(buffer, sizeof(buffer), pos,
+                                                " INV %08lx",
+                                                (unsigned long)mn->map_un.map_UserData);
                         }
 
                         if (mn->map_Properties & MAPP_SWAPPED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                            " SW %08lx",
-                                            (unsigned long)mn->map_un.map_UserData);
+                            pos = append_format(buffer, sizeof(buffer), pos,
+                                                " SW %08lx",
+                                                (unsigned long)mn->map_un.map_UserData);
                         }
 
                         if (mn->map_Properties & MAPP_REMAPPED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                            " MAP %08lx",
-                                            (unsigned long)(mn->map_un.map_Delta +
-                                                            mn->map_Lower));
+                            pos = append_format(buffer, sizeof(buffer), pos,
+                                                " MAP %08lx",
+                                                (unsigned long)(mn->map_un.map_Delta +
+                                                                mn->map_Lower));
                         }
 
                         if (mn->map_Properties & MAPP_BUNDLED) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                            " BN %08lx",
-                                            (unsigned long)mn->map_un.map_Page);
+                            pos = append_format(buffer, sizeof(buffer), pos,
+                                                " BN %08lx",
+                                                (unsigned long)mn->map_un.map_Page);
                         }
 
                         if (mn->map_Properties & MAPP_INDIRECT) {
-                            pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                                            " IND %08lx",
-                                            (unsigned long)mn->map_un.map_Descriptor);
+                            pos = append_format(buffer, sizeof(buffer), pos,
+                                                " IND %08lx",
+                                                (unsigned long)mn->map_un.map_Descriptor);
                         }
                     }
                     entry = &mmu_list.entries[mmu_list.count];
