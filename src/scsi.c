@@ -492,13 +492,14 @@ void scan_scsi_devices(const char *handler_name, ULONG base_unit)
                     debug("  scsi: Found device ID %d: %s %s\n",
                           (LONG)target, (LONG)dev->manufacturer, (LONG)dev->model);
 
-                    if (scsi_device_list.count >= MAX_SCSI_DEVICES) {
-                        break;
-                    }
                 }
             }
 
             CloseDevice((struct IORequest *)io);
+
+            if (scsi_device_list.count >= MAX_SCSI_DEVICES) {
+                break;
+            }
         }
 
         if (scsi_device_list.count >= MAX_SCSI_DEVICES) {
