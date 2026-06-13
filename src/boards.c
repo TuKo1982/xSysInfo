@@ -96,7 +96,8 @@ void enumerate_boards(void)
         debug("  boards: Found board at $%08X\n", (ULONG)board->board_address);
 
         /* Determine Zorro type */
-        if ((cd->cd_Rom.er_Type & ERT_TYPEMASK) == ERT_ZORROIII) {
+        if ((cd->cd_Rom.er_Flags & ERFF_ZORRO_III) ||
+            ((cd->cd_Rom.er_Type & ERT_TYPEMASK) == ERT_ZORROIII)) {
             board->board_type = BOARD_ZORRO_III;
         } else {
             board->board_type = BOARD_ZORRO_II;
