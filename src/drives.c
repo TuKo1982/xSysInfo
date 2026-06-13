@@ -983,7 +983,7 @@ static void draw_drives_data(BOOL full_redraw)
 
     if (app->selected_drive < 0 || app->selected_drive >= (LONG)drive_list.count) {
         SetAPen(rp, COLOR_TEXT);
-        Move(rp, 250, 12);
+        Move(rp, 250, 120);
         Text(rp, (CONST_STRPTR)get_string(MSG_DRIVES_NO_DRIVES_FOUND), strlen(get_string(MSG_DRIVES_NO_DRIVES_FOUND)));
     } else {
         drive = &drive_list.drives[app->selected_drive];
