@@ -26,6 +26,10 @@
 #include "tagitem.h"
 #endif
 
+#define BOARD_LIST_FIRST_Y 56
+#define BOARD_LIST_LINE_H 10
+#define BOARD_LIST_BOTTOM_PAD 50
+
 /* Global board list */
 BoardList board_list;
 
@@ -141,6 +145,26 @@ static void draw_board_field(struct RastPort *rp, WORD x, WORD y, const char *te
     Text(rp, (CONST_STRPTR)text, strlen(text));
 }
 
+static LONG visible_board_rows(void)
+{
+    LONG rows;
+
+    rows = ((LONG)app->screen_height - BOARD_LIST_BOTTOM_PAD -
+            BOARD_LIST_FIRST_Y + BOARD_LIST_LINE_H - 1) / BOARD_LIST_LINE_H;
+    return rows > 0 ? rows : 1;
+}
+
+static LONG max_board_scroll(void)
+{
+    LONG rows = visible_board_rows();
+
+    if ((LONG)board_list.count <= rows) {
+        return 0;
+    }
+
+    return (LONG)board_list.count - rows;
+}
+
 /*
  * Draw boards view
  */
@@ -150,6 +174,7 @@ void draw_boards_view(void)
     WORD y;
     ULONG i;
     char buffer[128];
+    Button *btn;
 
     /* Draw title panel */
     draw_panel(20,  0, 600, 24, NULL);
@@ -173,9 +198,13 @@ void draw_boards_view(void)
     Draw(rp, 628, y + 4);
 
     /* Draw board entries */
-    y = 56;
+    if (app->board_scroll > max_board_scroll()) {
+        app->board_scroll = max_board_scroll();
+    }
+
+    y = BOARD_LIST_FIRST_Y;
     for (i = app->board_scroll;
-         i < board_list.count && y < app->screen_height - 50;
+         i < board_list.count && y < app->screen_height - BOARD_LIST_BOTTOM_PAD;
          i++) {
 
         BoardInfo *board = &board_list.boards[i];
@@ -205,7 +234,7 @@ void draw_boards_view(void)
         snprintf(buffer, sizeof(buffer), "%ld", (long)board->serial_number);
         draw_board_field(rp, 550, y, buffer);
 
-        y += 10;
+        y += BOARD_LIST_LINE_H;
     }
 
     if (board_list.count == 0) {
@@ -215,8 +244,12 @@ void draw_boards_view(void)
         Text(rp, (CONST_STRPTR)get_string(MSG_BOARDS_NO_BOARDS_FOUND), strlen(get_string(MSG_BOARDS_NO_BOARDS_FOUND)));
     }
 
-    /* Draw exit button */
-    Button *btn = find_button(BTN_BOARD_EXIT);
+    /* Draw bottom buttons */
+    btn = find_button(BTN_BOARD_PREV);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_BOARD_NEXT);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_BOARD_EXIT);
     if (btn) draw_button(btn);
 }
 
@@ -225,6 +258,20 @@ void draw_boards_view(void)
  */
 void boards_view_update_buttons(void)
 {
+    LONG max_scroll = max_board_scroll();
+
+    if (max_scroll > 0) {
+        add_button(20, 188, 60, 12,
+                   get_string(MSG_BTN_PREV), BTN_BOARD_PREV,
+                   app->board_scroll > 0);
+        add_button(90, 188, 60, 12,
+                   get_string(MSG_BTN_NEXT), BTN_BOARD_NEXT,
+                   app->board_scroll < max_scroll);
+        add_button(560, 188, 60, 12,
+                   get_string(MSG_BTN_EXIT), BTN_BOARD_EXIT, TRUE);
+        return;
+    }
+
     add_button(20, 188, 60, 12,
                get_string(MSG_BTN_EXIT), BTN_BOARD_EXIT, TRUE);
 }
@@ -234,7 +281,26 @@ void boards_view_update_buttons(void)
  */
 void boards_view_handle_button(ButtonID id)
 {
-    if (id == BTN_BOARD_EXIT) {
-        switch_to_view(VIEW_MAIN);
+    switch (id) {
+        case BTN_BOARD_PREV:
+            if (app->board_scroll > 0) {
+                app->board_scroll--;
+                redraw_current_view();
+            }
+            break;
+
+        case BTN_BOARD_NEXT:
+            if (app->board_scroll < max_board_scroll()) {
+                app->board_scroll++;
+                redraw_current_view();
+            }
+            break;
+
+        case BTN_BOARD_EXIT:
+            switch_to_view(VIEW_MAIN);
+            break;
+
+        default:
+            break;
     }
 }

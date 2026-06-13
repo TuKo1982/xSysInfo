@@ -52,7 +52,9 @@ typedef enum {
     BTN_DRV_PAGE_PREV,      /* Drive list pager */
     BTN_DRV_PAGE_NEXT,
 
-    /* Boards view button */
+    /* Boards view buttons */
+    BTN_BOARD_PREV,
+    BTN_BOARD_NEXT,
     BTN_BOARD_EXIT,
 
     /* SCSI view button */
