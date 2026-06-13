@@ -756,6 +756,36 @@ static void set_palette(void)
 }
 
 /*
+ * Find the colormap pen closest to a 4-bit RGB triplet.
+ *
+ * GetRGB4() is available since V1, so this works where FindColor() and
+ * ObtainBestPenA() (both V39) are not. Compares in 4-bit space and
+ * allocates nothing.
+ */
+static WORD find_closest_pen(struct ColorMap *cm, WORD ncolors,
+                             LONG r, LONG g, LONG b)
+{
+    WORD best = 1;
+    LONG best_dist = 0x7FFFFFFF;
+    WORD i;
+
+    for (i = 0; i < ncolors; i++) {
+        ULONG rgb = GetRGB4(cm, i);
+        LONG dr = (LONG)((rgb >> 8) & 0xF) - r;
+        LONG dg = (LONG)((rgb >> 4) & 0xF) - g;
+        LONG db = (LONG)(rgb & 0xF) - b;
+        LONG dist = dr * dr + dg * dg + db * db;
+
+        if (dist < best_dist) {
+            best_dist = dist;
+            best = i;
+        }
+    }
+
+    return best;
+}
+
+/*
  * Allocate pens for drawing
  * On custom screen: use direct pen indices 0-7
  * On Workbench: obtain best matching pens from screen's colormap
@@ -805,14 +835,18 @@ static void allocate_pens(void)
         }
         app->pens_allocated = TRUE;
     } else {
-        /* OS 2.0 (v37-v38): Use FindColor for best match without allocation */
+        /*
+         * OS 2.0/2.1 (graphics V36-38): FindColor() and ObtainBestPenA()
+         * are V39, so match each color against the screen's palette by
+         * hand with GetRGB4(). No pens are allocated, so pens_allocated
+         * stays FALSE and release_pens() leaves them alone.
+         */
+        WORD ncolors = 1 << app->screen->BitMap.Depth;
         for (i = 0; i < NUM_COLORS; i++) {
-            /* Convert 4-bit RGB to 32-bit RGB for FindColor */
-            ULONG r = ((palette[i] >> 8) & 0xF) * 0x11111111;
-            ULONG g = ((palette[i] >> 4) & 0xF) * 0x11111111;
-            ULONG b = (palette[i] & 0xF) * 0x11111111;
-
-            app->pens[i] = FindColor(cm, r, g, b, -1);
+            app->pens[i] = find_closest_pen(cm, ncolors,
+                                            (palette[i] >> 8) & 0xF,
+                                            (palette[i] >> 4) & 0xF,
+                                            palette[i] & 0xF);
         }
     }
 }
