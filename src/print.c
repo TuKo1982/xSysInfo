@@ -35,7 +35,10 @@ extern BoardList board_list;
 extern DriveList drive_list;
 
 /* Helper macro for writing to file */
-#define WRITE_LINE(fh, str) Write(fh, (const char *)str, strlen((const char *)str)); Write(fh, (const char *)"\n", 1)
+#define WRITE_LINE(fh, str) do { \
+    Write(fh, (const char *)str, strlen((const char *)str)); \
+    Write(fh, (const char *)"\n", 1); \
+} while (0)
 
 /*
  * Write a formatted line to file
