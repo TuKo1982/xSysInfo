@@ -246,6 +246,7 @@ AFB_68020		EQU	1
 
 _GetCacheBits:
 	movem.l	d4/a5/a6,-(sp)
+	moveq	#0,d0
 	move.l	$4.w,a6
 	move.w	AttnFlags(a6),d4
 	btst	#AFB_68020,d4
@@ -265,6 +266,7 @@ AFB_68040		EQU	3
 
 _SetCacheBits:				; d1: flags, d2: mask
 	movem.l	d1-d4/a5/a6,-(sp)
+	moveq	#0,d0
 	move.l	$4.w,a6
 	move.w	AttnFlags(a6),d4
 	btst	#AFB_68020,d4
