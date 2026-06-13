@@ -155,8 +155,8 @@ void enumerate_libraries(void)
     /* Insert artificial "kickstart" entry at the beginning */
     /* Insert artificial "kickstart (soft)" entry at the beginning */
     if ((libraries_list.count+1) < MAX_SOFTWARE_ENTRIES) {
-        if (hw_info.kickstart_version != hw_info.kickstart_patch_version &&
-            hw_info.kickstart_revision != hw_info.kickstart_patch_revision &&
+        if ((hw_info.kickstart_version != hw_info.kickstart_patch_version ||
+             hw_info.kickstart_revision != hw_info.kickstart_patch_revision) &&
             0 != hw_info.kickstart_patch_version &&
             0 != hw_info.kickstart_patch_revision &&
             hw_info.kickstart_version >= 40 /* softkick from Kick 3.1 (v40)+ */
