@@ -312,7 +312,7 @@ download-libs: $(IDENTIFY_USR_LHA) $(IDENTIFY_PCI_LHA) $(OPENPCI_LHA) $(MMULIB_L
 	# Extract MMULib
 	@echo "  UNPACK $(MMULIB_LHA)"
 	@lha xq $(MMULIB_LHA) MMULib/Libs/mmu.library \
-		MMULib/Libs/680x0.library MMULib/Libs/68020.library \
+		MMULib/Libs/68020.library \
 		MMULib/Libs/68030.library MMULib/Libs/68040.library \
 		MMULib/Libs/68060.library
 	@mv MMULib/Libs/mmu.library 3rdparty/identify/build/
@@ -363,7 +363,7 @@ disk: $(TARGET) download-libs TinySetPatch
 	@xdftool $(DISK) makedir Libs
 	@xdftool $(DISK) write 3rdparty/identify/build/identify.library Libs/identify.library
 	@xdftool $(DISK) write 3rdparty/identify/build/openpci.library Libs/openpci.library
-	@for lib in mmu 680x0 68020 68030 68040 68060; do \
+	@for lib in mmu 68020 68030 68040 68060; do \
 		xdftool $(DISK) write 3rdparty/identify/build/$$lib.library Libs/$$lib.library; \
 	done
 	@xdftool $(DISK) makedir S
