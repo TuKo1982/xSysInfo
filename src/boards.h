@@ -17,6 +17,7 @@
 typedef enum {
     BOARD_ZORRO_II,
     BOARD_ZORRO_III,
+    BOARD_PCI,
     BOARD_UNKNOWN
 } BoardType;
 
@@ -25,12 +26,14 @@ typedef struct {
     ULONG board_address;
     ULONG board_size;
     UWORD manufacturer_id;
-    UBYTE product_id;
+    UWORD product_id;
     BoardType board_type;
     LONG serial_number;
     char product_name[64];
     char manufacturer_name[64];
     char size_string[16];       /* Human-readable size */
+    char address_string[16];    /* Human-readable address or placeholder */
+    char detail_string[32];     /* Serial number or PCI class */
 } BoardInfo;
 
 /* Board list */

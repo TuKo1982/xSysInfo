@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2025 Stefan Reinauer
 
 /*
- * xSysInfo - Expansion boards (Zorro) enumeration and view
+ * xSysInfo - Expansion boards enumeration and view
  */
 
 #include <string.h>
@@ -29,6 +29,15 @@
 #define BOARD_LIST_FIRST_Y 56
 #define BOARD_LIST_LINE_H 10
 #define BOARD_LIST_BOTTOM_PAD 50
+
+#define OPENPCI_MANUFACTURER_FIRST 1729
+#define OPENPCI_MANUFACTURER_LAST  1735
+#define OPENPCI_RESOURCE_CONFIG    1
+
+typedef struct {
+    UWORD vendor;
+    UWORD device;
+} PciCandidate;
 
 /* Global board list */
 BoardList board_list;
@@ -61,9 +70,236 @@ const char *get_board_type_string(BoardType type)
             return get_string(MSG_ZORRO_II);
         case BOARD_ZORRO_III:
             return get_string(MSG_ZORRO_III);
+        case BOARD_PCI:
+            return "PCI";
         default:
             return get_string(MSG_UNKNOWN);
     }
+}
+
+static BOOL append_zorro_board(struct ConfigDev *cd, const char *manufacturer,
+                               const char *product)
+{
+    BoardInfo *board;
+
+    if (board_list.count >= MAX_BOARDS)
+        return FALSE;
+
+    board = &board_list.boards[board_list.count];
+
+    board->board_address = (ULONG)cd->cd_BoardAddr;
+    board->board_size = cd->cd_BoardSize;
+    board->manufacturer_id = cd->cd_Rom.er_Manufacturer;
+    board->product_id = cd->cd_Rom.er_Product;
+    board->serial_number = cd->cd_Rom.er_SerialNumber;
+
+    debug("  boards: Found Zorro board at $%08X\n",
+          (ULONG)board->board_address);
+
+    if ((cd->cd_Rom.er_Flags & ERFF_ZORRO_III) ||
+        ((cd->cd_Rom.er_Type & ERT_TYPEMASK) == ERT_ZORROIII)) {
+        board->board_type = BOARD_ZORRO_III;
+    } else {
+        board->board_type = BOARD_ZORRO_II;
+    }
+
+    format_board_size(board->board_size, board->size_string,
+                      sizeof(board->size_string));
+    snprintf(board->address_string, sizeof(board->address_string),
+             "$%08lX", (unsigned long)board->board_address);
+    snprintf(board->detail_string, sizeof(board->detail_string), "%ld",
+             (long)board->serial_number);
+
+    if (manufacturer && manufacturer[0]) {
+        snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
+                 "%s", manufacturer);
+    } else {
+        snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
+                 "ID %u", board->manufacturer_id);
+    }
+
+    if (product && product[0]) {
+        snprintf(board->product_name, sizeof(board->product_name), "%s",
+                 product);
+    } else {
+        snprintf(board->product_name, sizeof(board->product_name),
+                 "Product %u", board->product_id);
+    }
+
+    board_list.count++;
+    return TRUE;
+}
+
+static BOOL is_openpci_resource(const struct ConfigDev *cd)
+{
+    UWORD manufacturer = cd->cd_Rom.er_Manufacturer;
+
+    return manufacturer >= OPENPCI_MANUFACTURER_FIRST &&
+           manufacturer <= OPENPCI_MANUFACTURER_LAST;
+}
+
+static BOOL collect_pci_candidate(struct ConfigDev *cd, PciCandidate *candidates,
+                                  ULONG *candidate_count)
+{
+    ULONG serial;
+
+    if (!is_openpci_resource(cd) ||
+        cd->cd_Rom.er_Product != OPENPCI_RESOURCE_CONFIG) {
+        return TRUE;
+    }
+
+    if (*candidate_count >= MAX_BOARDS)
+        return FALSE;
+
+    serial = cd->cd_Rom.er_SerialNumber;
+    candidates[*candidate_count].vendor = (UWORD)(serial >> 16);
+    candidates[*candidate_count].device = (UWORD)serial;
+
+    if (!candidates[*candidate_count].vendor &&
+        !candidates[*candidate_count].device) {
+        return TRUE;
+    }
+
+    (*candidate_count)++;
+    return TRUE;
+}
+
+static BOOL append_pci_board(UWORD vendor, UWORD device)
+{
+    BoardInfo *board;
+    LONG result;
+    char manufacturer[64];
+    char product[64];
+
+    if (board_list.count >= MAX_BOARDS)
+        return FALSE;
+
+    manufacturer[0] = '\0';
+    product[0] = '\0';
+
+    result = IdPciExpansionTags(
+        IDTAG_ManufID, (ULONG)vendor,
+        IDTAG_ProdID, (ULONG)device,
+        IDTAG_ManufStr, (ULONG)manufacturer,
+        IDTAG_ProdStr, (ULONG)product,
+        IDTAG_StrLength, sizeof(product),
+        TAG_DONE);
+
+    if (result != IDERR_OKAY) {
+        debug("  boards: PCI ID lookup %04lx:%04lx failed (%ld)\n",
+              (unsigned long)vendor, (unsigned long)device, (long)result);
+    }
+
+    board = &board_list.boards[board_list.count];
+    board->board_type = BOARD_PCI;
+    board->manufacturer_id = vendor;
+    board->product_id = device;
+    board->serial_number = 0;
+    board->board_address = 0;
+    board->board_size = 0;
+
+    snprintf(board->address_string, sizeof(board->address_string), "--");
+    snprintf(board->size_string, sizeof(board->size_string), "--");
+    snprintf(board->detail_string, sizeof(board->detail_string), "PCI");
+
+    if (manufacturer[0]) {
+        snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
+                 "%s", manufacturer);
+    } else {
+        snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
+                 "$%04lx", (unsigned long)vendor);
+    }
+
+    if (product[0]) {
+        snprintf(board->product_name, sizeof(board->product_name), "%s",
+                 product);
+    } else {
+        snprintf(board->product_name, sizeof(board->product_name),
+                 "$%04lx", (unsigned long)device);
+    }
+
+    debug("  boards: Found PCI board %04lx:%04lx from virtual ConfigDev\n",
+          (unsigned long)vendor, (unsigned long)device);
+
+    board_list.count++;
+    return TRUE;
+}
+
+static void enumerate_zorro_boards_with_identify(void)
+{
+    struct ConfigDev *cd = NULL;
+    PciCandidate pci_candidates[MAX_BOARDS];
+    ULONG pci_count = 0;
+    ULONG i;
+    LONG result;
+    ULONG class_id;
+    UBYTE unknown;
+    char manufacturer[64];
+    char product[64];
+    char class_name[64];
+
+    debug("  boards: Scanning physical expansion boards via identify.library...\n");
+
+    while (board_list.count < MAX_BOARDS) {
+        class_id = IDCID_UNKNOWN;
+        unknown = FALSE;
+        manufacturer[0] = '\0';
+        product[0] = '\0';
+        class_name[0] = '\0';
+
+        result = IdExpansionTags(
+            IDTAG_Expansion, (ULONG)&cd,
+            IDTAG_ManufStr, (ULONG)manufacturer,
+            IDTAG_ProdStr, (ULONG)product,
+            IDTAG_ClassStr, (ULONG)class_name,
+            IDTAG_ClassID, (ULONG)&class_id,
+            IDTAG_UnknownFlag, (ULONG)&unknown,
+            IDTAG_StrLength, sizeof(product),
+            TAG_DONE);
+
+        if (result != IDERR_OKAY)
+            break;
+
+        if (class_id == IDCID_VIRTUAL) {
+            debug("  boards: Skipping virtual expansion board\n");
+            if (!collect_pci_candidate(cd, pci_candidates, &pci_count))
+                break;
+            continue;
+        }
+
+        append_zorro_board(cd, manufacturer, product);
+    }
+
+    for (i = 0; i < pci_count; i++) {
+        if (!append_pci_board(pci_candidates[i].vendor,
+                              pci_candidates[i].device)) {
+            break;
+        }
+    }
+}
+
+static void enumerate_zorro_boards_raw(void)
+{
+    struct ConfigDev *cd = NULL;
+    struct Library *ExpansionBase;
+
+    debug("  boards: Opening expansion.library...\n");
+    ExpansionBase = OpenLibrary((CONST_STRPTR)"expansion.library",
+                                MIN_EXPANSION_VERSION);
+    if (!ExpansionBase) {
+        Printf((CONST_STRPTR)"Could not open expansion.library v%d\n",
+               MIN_EXPANSION_VERSION);
+        return;
+    }
+
+    debug("  boards: Scanning raw ConfigDevs...\n");
+    while ((cd = (struct ConfigDev *)FindConfigDev(cd, -1, -1)) != NULL) {
+        if (!append_zorro_board(cd, NULL, NULL))
+            break;
+    }
+
+    debug("  boards: Closing expansion.library...\n");
+    CloseLibrary(ExpansionBase);
 }
 
 /*
@@ -71,68 +307,16 @@ const char *get_board_type_string(BoardType type)
  */
 void enumerate_boards(void)
 {
-    struct ConfigDev *cd = NULL;
-    struct Library *ExpansionBase;
-
     debug("  boards: Starting enumeration...\n");
 
     memset(&board_list, 0, sizeof(board_list));
 
-    debug("  boards: Opening expansion.library...\n");
-    ExpansionBase = OpenLibrary((CONST_STRPTR)"expansion.library", MIN_EXPANSION_VERSION);
-    if (!ExpansionBase) {
-        Printf((CONST_STRPTR)"Could not open expansion.library v%d\n", MIN_EXPANSION_VERSION);
-        return;
+    if (IdentifyBase) {
+        enumerate_zorro_boards_with_identify();
+    } else {
+        enumerate_zorro_boards_raw();
     }
 
-    debug("  boards: Scanning for ConfigDevs...\n");
-    while ((cd = (struct ConfigDev *)FindConfigDev(cd, -1, -1)) != NULL) {
-        if (board_list.count >= MAX_BOARDS) break;
-
-        BoardInfo *board = &board_list.boards[board_list.count];
-
-        board->board_address = (ULONG)cd->cd_BoardAddr;
-        board->board_size = cd->cd_BoardSize;
-        board->manufacturer_id = cd->cd_Rom.er_Manufacturer;
-        board->product_id = cd->cd_Rom.er_Product;
-        board->serial_number = cd->cd_Rom.er_SerialNumber;
-
-        debug("  boards: Found board at $%08X\n", (ULONG)board->board_address);
-
-        /* Determine Zorro type */
-        if ((cd->cd_Rom.er_Flags & ERFF_ZORRO_III) ||
-            ((cd->cd_Rom.er_Type & ERT_TYPEMASK) == ERT_ZORROIII)) {
-            board->board_type = BOARD_ZORRO_III;
-        } else {
-            board->board_type = BOARD_ZORRO_II;
-        }
-
-        /* Format size string */
-        format_board_size(board->board_size, board->size_string,
-                          sizeof(board->size_string));
-
-        /* Use identify.library to get product and manufacturer names */
-        if (IdentifyBase) {
-            debug("  boards: Identifying board...\n");
-            IdExpansionTags(
-                IDTAG_ConfigDev, (ULONG)cd,
-                IDTAG_ManufStr, (ULONG)board->manufacturer_name,
-                IDTAG_ProdStr, (ULONG)board->product_name,
-                IDTAG_StrLength, sizeof(board->product_name) - 1,
-                TAG_DONE);
-        } else {
-            /* Fallback if identify not available */
-            snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
-                     "ID %u", board->manufacturer_id);
-            snprintf(board->product_name, sizeof(board->product_name),
-                     "Product %u", board->product_id);
-        }
-
-        board_list.count++;
-    }
-
-    debug("  boards: Closing expansion.library...\n");
-    CloseLibrary(ExpansionBase);
     debug("  boards: Enumeration complete, found %d boards\n", (LONG)board_list.count);
 }
 
@@ -213,8 +397,7 @@ void draw_boards_view(void)
         SetBPen(rp, COLOR_BACKGROUND);
 
         /* Address */
-        snprintf(buffer, sizeof(buffer), "$%08lX", (unsigned long)board->board_address);
-        draw_board_field(rp, 25, y, buffer);
+        draw_board_field(rp, 25, y, board->address_string);
 
         /* Size */
         draw_board_field(rp, 136, y, board->size_string);
@@ -230,8 +413,8 @@ void draw_boards_view(void)
         snprintf(buffer, sizeof(buffer), "%.14s", board->manufacturer_name);
         draw_board_field(rp, 420, y, buffer);
 
-        /* Serial */
-        snprintf(buffer, sizeof(buffer), "%ld", (long)board->serial_number);
+        /* Serial or PCI class */
+        snprintf(buffer, sizeof(buffer), "%.12s", board->detail_string);
         draw_board_field(rp, 550, y, buffer);
 
         y += BOARD_LIST_LINE_H;
