@@ -42,6 +42,13 @@ DriveList drive_list;
 
 /* Drive list pagination: the view shows one page of buttons at a time */
 #define DRIVES_PER_PAGE 10
+
+#define DRIVE_SPEED_FIRST_CHUNK (64UL * 1024UL)
+#define DRIVE_SPEED_HARD_CHUNK  (256UL * 1024UL)
+#define DRIVE_SPEED_TARGET_US   1000000UL
+#define DRIVE_SPEED_MAX_US      2000000UL
+#define DRIVE_SPEED_MAX_BYTES   (32UL * 1024UL * 1024UL)
+
 static ULONG drive_page = 0;
 
 /* External references */
@@ -299,6 +306,19 @@ static void scan_dos_list(void)
                     drive->bytes_per_block = de->de_SizeBlock << 2;
                     drive->num_buffers = de->de_NumBuffers;
 
+                    if (de->de_TableSize >= 12) {
+                        drive->buf_mem_type = de->de_BufMemType;
+                        drive->has_buf_mem_type = TRUE;
+                    }
+                    if (de->de_TableSize >= 13) {
+                        drive->max_transfer = de->de_MaxTransfer;
+                        drive->has_max_transfer = TRUE;
+                    }
+                    if (de->de_TableSize >= 14) {
+                        drive->address_mask = de->de_Mask;
+                        drive->has_address_mask = TRUE;
+                    }
+
                     /* Get DOS type if available (de_DosType is at index 16) */
                     if (de->de_TableSize >= 16) {
                         drive->dos_type = de->de_DosType;
@@ -317,6 +337,11 @@ static void scan_dos_list(void)
                           (LONG)drive->dos_type,
                           (LONG)drive->bytes_per_block,
                           (LONG)drive->geometry_total_blocks);
+                    debug("  drives: %s DMA hints bufmem=$%08lx max=$%08lx mask=$%08lx\n",
+                          (LONG)drive->device_name,
+                          (LONG)(drive->has_buf_mem_type ? drive->buf_mem_type : 0),
+                          (LONG)(drive->has_max_transfer ? drive->max_transfer : 0),
+                          (LONG)(drive->has_address_mask ? drive->address_mask : 0));
 
                     drive->is_valid = TRUE;
                 } else {
@@ -728,6 +753,143 @@ static BOOL nsd_supports_read64(struct IOStdReq *io)
     return FALSE;
 }
 
+static const char *drive_read_cmd_name(UWORD command)
+{
+    switch (command) {
+        case CMD_READ:
+            return "CMD_READ";
+        case TD_READ64:
+            return "TD_READ64";
+        case NSCMD_TD_READ64:
+            return "NSCMD_TD_READ64";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+static ULONG align_drive_transfer(ULONG size, ULONG block_size)
+{
+    if (block_size > 1) {
+        size -= size % block_size;
+    }
+    return size;
+}
+
+static BOOL drive_buffer_matches_mask(APTR buffer, ULONG size, ULONG mask)
+{
+    ULONG start;
+    ULONG end;
+
+    if (!buffer || size == 0 || mask == 0) {
+        return TRUE;
+    }
+
+    start = (ULONG)buffer;
+    end = start + size - 1;
+    if (end < start) {
+        return FALSE;
+    }
+
+    return ((start & ~mask) == 0 && (end & ~mask) == 0);
+}
+
+static APTR alloc_masked_drive_buffer(ULONG size, ULONG flags, ULONG mask,
+                                      const char *label, ULONG *used_flags)
+{
+    APTR buffer;
+
+    buffer = AllocMem(size, flags | MEMF_CLEAR);
+    if (!buffer) {
+        debug("  drives: Buffer allocation failed using %s flags $%08lx\n",
+              (LONG)label, (ULONG)flags);
+        return NULL;
+    }
+
+    if (!drive_buffer_matches_mask(buffer, size, mask)) {
+        debug("  drives: Buffer %s at $%08lx size %lu rejected by mask $%08lx\n",
+              (LONG)label, (ULONG)buffer, (ULONG)size, (ULONG)mask);
+        FreeMem(buffer, size);
+        return NULL;
+    }
+
+    if (used_flags) {
+        *used_flags = flags;
+    }
+    debug("  drives: Buffer %s at $%08lx size %lu flags $%08lx\n",
+          (LONG)label, (ULONG)buffer, (ULONG)size, (ULONG)flags);
+
+    return buffer;
+}
+
+static APTR alloc_drive_speed_buffer(const DriveInfo *drive, ULONG size,
+                                     BOOL safe_retry, BOOL *can_retry,
+                                     ULONG *used_flags)
+{
+    ULONG mask = 0;
+    APTR buffer;
+
+    if (can_retry) {
+        *can_retry = FALSE;
+    }
+    if (drive->has_address_mask && drive->address_mask != 0) {
+        mask = drive->address_mask;
+    }
+
+    if (safe_retry) {
+        buffer = alloc_masked_drive_buffer(size, MEMF_CHIP | MEMF_PUBLIC,
+                                           mask, "safe-chip-public",
+                                           used_flags);
+        if (buffer) return buffer;
+        return alloc_masked_drive_buffer(size, MEMF_CHIP, mask, "safe-chip",
+                                         used_flags);
+    }
+
+    if (drive->has_buf_mem_type && drive->buf_mem_type != 0) {
+        if (can_retry && mask == 0 &&
+            (drive->buf_mem_type & MEMF_CHIP) == 0) {
+            *can_retry = TRUE;
+        }
+        buffer = alloc_masked_drive_buffer(size, drive->buf_mem_type, mask,
+                                           "DosEnvec", used_flags);
+        if (buffer) return buffer;
+
+        if (can_retry) {
+            *can_retry = FALSE;
+        }
+        debug("  drives: Falling back from DosEnvec buffer flags $%08lx\n",
+              (ULONG)drive->buf_mem_type);
+        buffer = alloc_masked_drive_buffer(size, MEMF_CHIP | MEMF_PUBLIC,
+                                           mask, "fallback-chip-public",
+                                           used_flags);
+        if (buffer) return buffer;
+        return alloc_masked_drive_buffer(size, MEMF_CHIP, mask,
+                                         "fallback-chip", used_flags);
+    }
+
+    if (can_retry && mask == 0) {
+        *can_retry = TRUE;
+    }
+
+    buffer = alloc_masked_drive_buffer(size, MEMF_FAST, mask, "fast",
+                                       used_flags);
+    if (buffer) return buffer;
+
+    buffer = alloc_masked_drive_buffer(size, MEMF_ANY, mask, "any",
+                                       used_flags);
+    if (buffer) return buffer;
+
+    if (mask != 0) {
+        buffer = alloc_masked_drive_buffer(size, MEMF_CHIP | MEMF_PUBLIC,
+                                           mask, "masked-chip-public",
+                                           used_flags);
+        if (buffer) return buffer;
+        return alloc_masked_drive_buffer(size, MEMF_CHIP, mask, "masked-chip",
+                                         used_flags);
+    }
+
+    return NULL;
+}
+
 /*
  * Measure drive speed (bytes/second)
  */
@@ -745,13 +907,22 @@ ULONG measure_drive_speed(ULONG index)
     struct EClockVal start, end;
     uint64_t elapsed;
     ULONG bytes_per_sec = 0;
-    ULONG num_reads;
+    ULONG num_reads = 0;
+    ULONG max_test_bytes;
+    ULONG target_us = 0;
+    ULONG max_us = 0;
+    ULONG min_reads = 1;
+    ULONG reads_done = 0;
+    ULONG read_length;
+    ULONG used_buffer_flags = 0;
     UWORD read_cmd = CMD_READ;
     uint64_t read_offset_bytes = 0;
     uint64_t offset64;
-    ULONG i;
     BYTE error;
     BOOL is_floppy;
+    BOOL read_failed = FALSE;
+    BOOL safe_buffer_retry = FALSE;
+    BOOL can_retry_safe_buffer = FALSE;
 
     if (!benchmark_timer_available()) return 0;
 
@@ -780,14 +951,34 @@ ULONG measure_drive_speed(ULONG index)
         /* Floppy: read small amount (one track worth) */
         buffer_size = 11 * 512;  /* 11 sectors * 512 bytes */
         num_reads = 2;
+        max_test_bytes = buffer_size * num_reads;
     } else {
-        /* Hard drive: read larger blocks */
-        buffer_size = 256 * 1024;  /* 256 KB */
-        num_reads = 8;
+        buffer_size = DRIVE_SPEED_HARD_CHUNK;
+        max_test_bytes = DRIVE_SPEED_MAX_BYTES;
+        target_us = DRIVE_SPEED_TARGET_US;
+        max_us = DRIVE_SPEED_MAX_US;
+        min_reads = 2;
     }
     if (block_size == 0) block_size = 512;
     if (buffer_size < block_size) buffer_size = block_size;
-    if (block_size > 1) buffer_size -= buffer_size % block_size;
+    buffer_size = align_drive_transfer(buffer_size, block_size);
+    if (buffer_size < block_size) buffer_size = block_size;
+    if (drive->has_max_transfer && drive->max_transfer != 0 &&
+        drive->max_transfer < buffer_size) {
+        ULONG capped = align_drive_transfer(drive->max_transfer, block_size);
+
+        if (capped >= block_size) {
+            buffer_size = capped;
+            debug("  drives: Capping speed read size to MaxTransfer %lu\n",
+                  (ULONG)buffer_size);
+        } else {
+            debug("  drives: Ignoring MaxTransfer %lu smaller than block %lu\n",
+                  (ULONG)drive->max_transfer, (ULONG)block_size);
+        }
+    }
+    if (max_test_bytes < buffer_size) {
+        max_test_bytes = buffer_size;
+    }
 
     /* Create message port */
     port = CreateMsgPort();
@@ -815,12 +1006,23 @@ ULONG measure_drive_speed(ULONG index)
     }
     device_opened = TRUE;
 
-    /* Allocate buffer - try fast memory first for hard drives, fall back to any */
-    buffer = AllocMem(buffer_size, MEMF_FAST | MEMF_CLEAR);
-    if (!buffer) {
-        buffer = AllocMem(buffer_size, MEMF_ANY | MEMF_CLEAR);
+retry_speed_test:
+    if (buffer) {
+        FreeMem(buffer, buffer_size);
+        buffer = NULL;
     }
+    total_read = 0;
+    elapsed = 0;
+    bytes_per_sec = 0;
+    reads_done = 0;
+    read_failed = FALSE;
+    read_cmd = CMD_READ;
+    can_retry_safe_buffer = FALSE;
+    used_buffer_flags = 0;
 
+    buffer = alloc_drive_speed_buffer(drive, buffer_size, safe_buffer_retry,
+                                      &can_retry_safe_buffer,
+                                      &used_buffer_flags);
     if (!buffer) {
         debug("  drives: Failed to allocate buffer\n");
         goto cleanup;
@@ -841,7 +1043,7 @@ ULONG measure_drive_speed(ULONG index)
 
     /* CMD_READ takes a 32-bit byte offset; partitions starting beyond
      * 4 GB need one of the 64-bit read commands */
-    if (read_offset_bytes + (uint64_t)num_reads * buffer_size > 0xFFFFFFFFULL) {
+    if (read_offset_bytes + (uint64_t)max_test_bytes > 0xFFFFFFFFULL) {
         if (nsd_supports_read64(io)) {
             read_cmd = NSCMD_TD_READ64;
             debug("  drives: Using NSD TD_READ64 for offset beyond 4 GB\n");
@@ -851,10 +1053,13 @@ ULONG measure_drive_speed(ULONG index)
         }
     }
 
-    debug("  drives: Speed test on %s unit %ld, %ld reads of %ld bytes at offset %lu MB\n",
+    debug("  drives: Speed test on %s unit %ld, cmd %s, chunk %lu max %lu target %lu us flags $%08lx at offset %lu MB ($%08lx:%08lx)\n",
           (LONG)drive->handler_name, (LONG)drive->unit_number,
-          (LONG)num_reads, (LONG)buffer_size,
-          (ULONG)(read_offset_bytes >> 20));
+          (LONG)drive_read_cmd_name(read_cmd),
+          (ULONG)buffer_size, (ULONG)max_test_bytes, (ULONG)target_us,
+          (ULONG)used_buffer_flags,
+          (ULONG)(read_offset_bytes >> 20),
+          (ULONG)(read_offset_bytes >> 32), (ULONG)read_offset_bytes);
 
     /* Untimed probe read; if the 64-bit command is not implemented,
      * fall back to measuring at the start of the device instead of
@@ -866,10 +1071,22 @@ ULONG measure_drive_speed(ULONG index)
         io->io_Offset = (ULONG)read_offset_bytes;
         io->io_Actual = (ULONG)(read_offset_bytes >> 32);
 
+        debug("  drives: Probe %s offset $%08lx:%08lx len %lu\n",
+              (LONG)drive_read_cmd_name(read_cmd),
+              (ULONG)(read_offset_bytes >> 32), (ULONG)read_offset_bytes,
+              (ULONG)block_size);
+
         error = DoIO((struct IORequest *)io);
-        if (error != 0) {
-            debug("  drives: 64-bit read failed (error %ld), reading at offset 0 instead\n",
-                  (LONG)error);
+        debug("  drives: Probe result error %ld io_Error %ld actual %lu\n",
+              (LONG)error, (LONG)io->io_Error, (ULONG)io->io_Actual);
+        if (error != 0 || io->io_Error != 0 ||
+            io->io_Actual != block_size) {
+            if (can_retry_safe_buffer && !safe_buffer_retry) {
+                debug("  drives: 64-bit probe failed, retrying with safe buffer\n");
+                safe_buffer_retry = TRUE;
+                goto retry_speed_test;
+            }
+            debug("  drives: 64-bit read probe failed, reading at offset 0 instead\n");
             read_cmd = CMD_READ;
             read_offset_bytes = 0;
         }
@@ -888,38 +1105,88 @@ ULONG measure_drive_speed(ULONG index)
         }
     }
 
-    /* Get start time */
     E_Freq = read_benchmark_clock(&start);
-    Forbid();
 
     /* Perform reads */
-    for (i = 0; i < num_reads; i++) {
-        offset64 = read_offset_bytes + (uint64_t)i * buffer_size;
+    while (TRUE) {
+        if (is_floppy) {
+            if (reads_done >= num_reads) {
+                break;
+            }
+        } else {
+            if (elapsed >= max_us && reads_done > 0) {
+                break;
+            }
+            if (reads_done >= min_reads && elapsed >= target_us) {
+                break;
+            }
+            if (total_read >= max_test_bytes) {
+                break;
+            }
+        }
+
+        read_length = buffer_size;
+        if (!is_floppy && read_length > DRIVE_SPEED_FIRST_CHUNK &&
+            (reads_done == 0 || elapsed > target_us / 4)) {
+            read_length = DRIVE_SPEED_FIRST_CHUNK;
+        }
+        if (read_length > max_test_bytes - total_read) {
+            read_length = max_test_bytes - total_read;
+        }
+        read_length = align_drive_transfer(read_length, block_size);
+        if (read_length < block_size) {
+            break;
+        }
+
+        offset64 = read_offset_bytes + (uint64_t)total_read;
 
         io->io_Command = read_cmd;
         io->io_Data = buffer;
-        io->io_Length = buffer_size;
+        io->io_Length = read_length;
         io->io_Offset = (ULONG)offset64;
         /* High 32 offset bits for the 64-bit read commands; CMD_READ
          * ignores io_Actual on input and the offset fits 32 bits then */
         io->io_Actual = (ULONG)(offset64 >> 32);
 
         error = DoIO((struct IORequest *)io);
-        if (error != 0) {
-            debug("  drives: Read error %ld at iteration %ld\n", (LONG)error, (LONG)i);
+        debug("  drives: Read %ld cmd %s offset $%08lx:%08lx len %lu error %ld io_Error %ld actual %lu\n",
+              (LONG)(reads_done + 1),
+              (LONG)drive_read_cmd_name(read_cmd),
+              (ULONG)(offset64 >> 32), (ULONG)offset64,
+              (ULONG)read_length, (LONG)error, (LONG)io->io_Error,
+              (ULONG)io->io_Actual);
+        if (error != 0 || io->io_Error != 0) {
+            debug("  drives: Read error %ld/%ld at iteration %ld\n",
+                  (LONG)error, (LONG)io->io_Error, (LONG)reads_done);
+            read_failed = TRUE;
+            break;
+        }
+        if (io->io_Actual != read_length) {
+            debug("  drives: Short read at iteration %ld: expected %lu got %lu\n",
+                  (LONG)reads_done, (ULONG)read_length,
+                  (ULONG)io->io_Actual);
+            read_failed = TRUE;
             break;
         }
         total_read += io->io_Actual;
+        reads_done++;
+
+        E_Freq = read_benchmark_clock(&end);
+        elapsed = EClock_Diff_in_ms(&start, &end, E_Freq);
     }
 
-    /* Get end time */
-    Permit();
     E_Freq = read_benchmark_clock(&end);
 
     /* Calculate speed */
     elapsed = EClock_Diff_in_ms(&start, &end, E_Freq);
 
-    if (elapsed > 0 && total_read > 0) {
+    if (read_failed && can_retry_safe_buffer && !safe_buffer_retry) {
+        debug("  drives: Read failed, retrying with safe buffer\n");
+        safe_buffer_retry = TRUE;
+        goto retry_speed_test;
+    }
+
+    if (!read_failed && elapsed > 0 && total_read > 0) {
         /* Timer ticks are in microseconds */
         bytes_per_sec = (ULONG)(((uint64_t)total_read * 1000000ULL) / elapsed);
         drive->speed_bytes_sec = bytes_per_sec;

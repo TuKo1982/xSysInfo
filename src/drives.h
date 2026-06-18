@@ -62,6 +62,12 @@ typedef struct {
     ULONG low_cylinder;
     ULONG high_cylinder;
     ULONG num_buffers;
+    ULONG buf_mem_type;
+    ULONG max_transfer;
+    ULONG address_mask;
+    BOOL has_buf_mem_type;
+    BOOL has_max_transfer;
+    BOOL has_address_mask;
     ULONG speed_bytes_sec;      /* 0 = not measured */
     ULONG disk_errors;
     BOOL speed_measured;
