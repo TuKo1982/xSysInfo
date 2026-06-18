@@ -1106,27 +1106,26 @@ static void update_software_list(void)
             TightText(rp, SOFTWARE_PANEL_X + 4, y, (CONST_STRPTR)buffer, -1, 8);
         }
         else {
-            /* Name (truncated if needed) */
-            snprintf(buffer, 16, "%-15s", entry->name);
+            /* Name */
             SetAPen(rp, COLOR_TEXT);
-            Move(rp, SOFTWARE_PANEL_X + 4, y);
-            Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+            draw_text_clipped(SOFTWARE_PANEL_X + 4, y, entry->name,
+                              126 - 4);
 
             /* Location */
-            snprintf(buffer, 12, "%-10s", get_location_string(entry->location));
-            Move(rp, SOFTWARE_PANEL_X + 126, y);
-            Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+            draw_text_clipped(SOFTWARE_PANEL_X + 126, y,
+                              get_location_string(entry->location),
+                              200 - 126);
 
             /* Address */
             snprintf(buffer, 12, "$%08lX", (unsigned long)entry->address);
             SetAPen(rp, COLOR_HIGHLIGHT);
-            Move(rp, SOFTWARE_PANEL_X + 200, y);
-            Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+            draw_text_clipped(SOFTWARE_PANEL_X + 200, y, buffer,
+                              284 - 200);
 
             /* Version */
             snprintf(buffer, sizeof(buffer), "V%d.%d", entry->version, entry->revision);
-            Move(rp, SOFTWARE_PANEL_X + 284, y);
-            Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+            draw_text_clipped(SOFTWARE_PANEL_X + 284, y, buffer,
+                              (SOFTWARE_PANEL_W - 16) - 284);
         }
 
         y += 8;
