@@ -118,11 +118,10 @@ void TightText(struct RastPort *rp, int x, int y, CONST_STRPTR str, int charGap,
         if (str[i] == ' ') {
             currentX += spaceWidth;
         } else {
+            int charWidth = TextLength(rp, &str[i], 1);
+
             Move(rp, currentX, y);
             Text(rp, &str[i], 1);
-
-            // Get character width and add small gap
-            int charWidth = TextLength(rp, &str[i], 1);
             currentX += charWidth + charGap;
         }
     }
@@ -738,6 +737,7 @@ void draw_button(Button *btn)
 
         SetAPen(rp, btn->enabled ? COLOR_TEXT : COLOR_PANEL_BG);
         SetBPen(rp, btn->enabled ? COLOR_PANEL_BG : COLOR_BUTTON_DARK);
+        TextLength(rp, (CONST_STRPTR)btn->label, text_len);
         Move(rp, text_x, text_y);
         Text(rp, (CONST_STRPTR)btn->label, text_len);
     }
@@ -770,9 +770,11 @@ void draw_cycle_button(Button *btn)
     text_y = btn->y + (btn->height + 6) / 2;
 
     SetAPen(rp, COLOR_TEXT);
+    TextLength(rp, (CONST_STRPTR)">", 1);
     Move(rp, icon_x + 1, text_y + 1);
     Text(rp, (CONST_STRPTR)">", 1);
     SetAPen(rp, btn->enabled ? COLOR_HIGHLIGHT : COLOR_BACKGROUND);
+    TextLength(rp, (CONST_STRPTR)">", 1);
     Move(rp, icon_x, text_y);
     Text(rp, (CONST_STRPTR)">", 1);
 
@@ -782,9 +784,11 @@ void draw_cycle_button(Button *btn)
         text_x = btn->x + 14;  /* After icon */
 
         SetAPen(rp, COLOR_TEXT);
+        TextLength(rp, (CONST_STRPTR)btn->label, text_len);
         Move(rp, text_x + 1, text_y + 1);
         Text(rp, (CONST_STRPTR)btn->label, text_len);
         SetAPen(rp, btn->enabled ? COLOR_HIGHLIGHT : COLOR_BACKGROUND);
+        TextLength(rp, (CONST_STRPTR)btn->label, text_len);
         Move(rp, text_x, text_y);
         Text(rp, (CONST_STRPTR)btn->label, text_len);
     }
@@ -895,11 +899,13 @@ void draw_scroll_bar(WORD x, WORD y, WORD w, WORD h, ULONG pos, ULONG total, ULO
 void draw_text(WORD x, WORD y, const char *text, UBYTE color)
 {
     struct RastPort *rp = app->rp;
+    WORD len = strlen(text);
 
     SetAPen(rp, color);
     SetBPen(rp, COLOR_PANEL_BG);
+    TextLength(rp, (CONST_STRPTR)text, len);
     Move(rp, x, y);
-    Text(rp, (CONST_STRPTR)text, strlen(text));
+    Text(rp, (CONST_STRPTR)text, len);
 }
 
 /*
@@ -907,7 +913,9 @@ void draw_text(WORD x, WORD y, const char *text, UBYTE color)
  */
 void draw_text_right(WORD x, WORD y, WORD width, const char *text, UBYTE color)
 {
-    WORD text_x = x + width - (strlen(text) * 8);
+    struct RastPort *rp = app->rp;
+    WORD text_x = x + width - TextLength(rp, (CONST_STRPTR)text, strlen(text));
+
     draw_text(text_x, y, text, color);
 }
 
@@ -916,7 +924,10 @@ void draw_text_right(WORD x, WORD y, WORD width, const char *text, UBYTE color)
  */
 void draw_text_centered(WORD x, WORD y, WORD width, const char *text, UBYTE color)
 {
-    WORD text_x = x + (width - (strlen(text) * 8)) / 2;
+    struct RastPort *rp = app->rp;
+    WORD text_x = x + (width - TextLength(rp, (CONST_STRPTR)text,
+                                           strlen(text))) / 2;
+
     draw_text(text_x, y, text, color);
 }
 
@@ -1410,9 +1421,8 @@ static void draw_speed_panel(void)
     y = SPEED_PANEL_Y + 26;
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_PANEL_BG);
-    Move(rp, SPEED_PANEL_X + 4, y);
     snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_DHRYSTONES));
-    Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+    draw_text_clipped(SPEED_PANEL_X + 4, y, buffer, 90 - 4);
 
     if (bench_results.benchmarks_valid) {
         snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)bench_results.dhrystones);
@@ -1420,12 +1430,11 @@ static void draw_speed_panel(void)
         snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_NA));
     }
     SetAPen(rp, COLOR_HIGHLIGHT);
-    Move(rp, SPEED_PANEL_X + 90, y);
-    Text(rp, (CONST_STRPTR)buffer, strlen(buffer));
+    draw_text_clipped(SPEED_PANEL_X + 90, y, buffer, 150 - 90);
 
     SetAPen(rp, COLOR_HIGHLIGHT);
-    Move(rp, SPEED_PANEL_X + 150, y);
-    Text(rp, (CONST_STRPTR)get_string(MSG_REF_YOU), strlen(get_string(MSG_REF_YOU)));
+    draw_text_clipped(SPEED_PANEL_X + 150, y, get_string(MSG_REF_YOU),
+                      178 - 150);
 
     /* Draw reference systems labels and speed factors */
     y += 8;
@@ -2230,6 +2239,7 @@ void show_status_overlay(const char *message)
     /* Draw centered message */
     SetAPen(rp, COLOR_BUTTON_LIGHT);  /* White text */
     SetBPen(rp, COLOR_BAR_YOU);
+    TextLength(rp, (CONST_STRPTR)message, text_len);
     Move(rp, dialog_x + (dialog_w - text_len * 8) / 2, dialog_y + 16);
     Text(rp, (CONST_STRPTR)message, text_len);
 }
@@ -2256,6 +2266,8 @@ static void draw_requester_field(WORD field_x, WORD field_y, WORD field_w, WORD 
                                  const char *filename, ULONG cursor_pos)
 {
     struct RastPort *rp = app->rp;
+    WORD cursor_x;
+    WORD max_text_w;
 
     /* Clear field interior */
     SetAPen(rp, COLOR_BACKGROUND);
@@ -2265,22 +2277,40 @@ static void draw_requester_field(WORD field_x, WORD field_y, WORD field_w, WORD 
     /* Draw filename text */
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_BACKGROUND);
-    Move(rp, field_x + 4, field_y + 10);
-    Text(rp, (CONST_STRPTR)filename, strlen(filename));
+    max_text_w = field_w - 8;
+    draw_text_clipped(field_x + 4, field_y + 10, filename, max_text_w);
 
     /* Draw cursor */
-    {
-        WORD cursor_x = field_x + 4 + cursor_pos * 8;
-        SetAPen(rp, COLOR_TEXT);
-        RectFill(rp, cursor_x, field_y + 2, cursor_x + 7, field_y + field_h - 3);
-        /* Draw character at cursor position in inverse */
-        if (filename[cursor_pos]) {
-            SetAPen(rp, COLOR_BACKGROUND);
-            SetBPen(rp, COLOR_TEXT);
-            Move(rp, cursor_x, field_y + 10);
-            Text(rp, (CONST_STRPTR)&filename[cursor_pos], 1);
-        }
+    cursor_x = field_x + 4;
+    if (cursor_pos > 0) {
+        cursor_x += TextLength(rp, (CONST_STRPTR)filename, cursor_pos);
     }
+    if (cursor_x > field_x + field_w - 10) {
+        cursor_x = field_x + field_w - 10;
+    }
+    SetAPen(rp, COLOR_TEXT);
+    RectFill(rp, cursor_x, field_y + 2, cursor_x + 7, field_y + field_h - 3);
+    /* Draw character at cursor position in inverse */
+    if (filename[cursor_pos]) {
+        SetAPen(rp, COLOR_BACKGROUND);
+        SetBPen(rp, COLOR_TEXT);
+        TextLength(rp, (CONST_STRPTR)&filename[cursor_pos], 1);
+        Move(rp, cursor_x, field_y + 10);
+        Text(rp, (CONST_STRPTR)&filename[cursor_pos], 1);
+    }
+}
+
+static void draw_requester_text_centered(WORD x, WORD y, WORD width,
+                                         const char *text)
+{
+    struct RastPort *rp = app->rp;
+    WORD text_width = TextLength(rp, (CONST_STRPTR)text, strlen(text));
+    WORD text_x = x + (width - text_width) / 2;
+
+    if (text_x < x + 2) {
+        text_x = x + 2;
+    }
+    draw_text_clipped(text_x, y, text, width - 4);
 }
 
 /*
@@ -2310,8 +2340,7 @@ static void draw_requester_overlay(WORD x, WORD y, WORD w, WORD h,
     RectFill(rp, x + 2, y + 2, x + w - 3, y + 14);
     SetAPen(rp, COLOR_BUTTON_LIGHT);
     SetBPen(rp, COLOR_BUTTON_DARK);
-    Move(rp, x + (w - strlen(title) * 8) / 2, y + 11);
-    Text(rp, (CONST_STRPTR)title, strlen(title));
+    draw_requester_text_centered(x, y + 11, w, title);
 
     /* Draw filename input field border */
     field_x = x + 16;
@@ -2338,8 +2367,8 @@ static void draw_requester_overlay(WORD x, WORD y, WORD w, WORD h,
     draw_3d_box(x + 24, btn_y, btn_w, btn_h, FALSE);
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_PANEL_BG);
-    Move(rp, x + 24 + (btn_w - 16) / 2, btn_y + 10);
-    Text(rp, (CONST_STRPTR)get_string(MSG_BTN_OK), strlen(get_string(MSG_BTN_OK)));
+    draw_requester_text_centered(x + 24, btn_y + 10, btn_w,
+                                 get_string(MSG_BTN_OK));
 
     /* CANCEL button */
     SetAPen(rp, COLOR_PANEL_BG);
@@ -2347,8 +2376,8 @@ static void draw_requester_overlay(WORD x, WORD y, WORD w, WORD h,
     draw_3d_box(x + w - 24 - btn_w, btn_y, btn_w, btn_h, FALSE);
     SetAPen(rp, COLOR_TEXT);
     SetBPen(rp, COLOR_PANEL_BG);
-    Move(rp, x + w - 24 - btn_w + (btn_w - 48) / 2, btn_y + 10);
-    Text(rp, (CONST_STRPTR)get_string(MSG_BTN_CANCEL), strlen(get_string(MSG_BTN_CANCEL)));
+    draw_requester_text_centered(x + w - 24 - btn_w, btn_y + 10, btn_w,
+                                 get_string(MSG_BTN_CANCEL));
 }
 
 /*

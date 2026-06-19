@@ -320,13 +320,10 @@ void enumerate_boards(void)
     debug("  boards: Enumeration complete, found %d boards\n", (LONG)board_list.count);
 }
 
-/*
- * Draw text field at position
- */
-static void draw_board_field(struct RastPort *rp, WORD x, WORD y, const char *text)
+static void draw_board_field_clipped(WORD x, WORD y, const char *text,
+                                     WORD max_x)
 {
-    Move(rp, x, y);
-    Text(rp, (CONST_STRPTR)text, strlen(text));
+    draw_text_clipped(x, y, text, max_x - x);
 }
 
 static LONG visible_board_rows(void)
@@ -397,25 +394,27 @@ void draw_boards_view(void)
         SetBPen(rp, COLOR_BACKGROUND);
 
         /* Address */
-        draw_board_field(rp, 25, y, board->address_string);
+        draw_board_field_clipped(25, y, board->address_string, 136);
 
         /* Size */
-        draw_board_field(rp, 136, y, board->size_string);
+        draw_board_field_clipped(136, y, board->size_string, 214);
 
         /* Type */
-        draw_board_field(rp, 214, y, get_board_type_string(board->board_type));
+        draw_board_field_clipped(214, y,
+                                 get_board_type_string(board->board_type),
+                                 296);
 
         /* Product */
-        snprintf(buffer, sizeof(buffer), "%.16s", board->product_name);
-        draw_board_field(rp, 296, y, buffer);
+        snprintf(buffer, sizeof(buffer), "%s", board->product_name);
+        draw_board_field_clipped(296, y, buffer, 420);
 
         /* Manufacturer */
-        snprintf(buffer, sizeof(buffer), "%.14s", board->manufacturer_name);
-        draw_board_field(rp, 420, y, buffer);
+        snprintf(buffer, sizeof(buffer), "%s", board->manufacturer_name);
+        draw_board_field_clipped(420, y, buffer, 550);
 
         /* Serial or PCI class */
-        snprintf(buffer, sizeof(buffer), "%.12s", board->detail_string);
-        draw_board_field(rp, 550, y, buffer);
+        snprintf(buffer, sizeof(buffer), "%s", board->detail_string);
+        draw_board_field_clipped(550, y, buffer, SCREEN_WIDTH - 4);
 
         y += BOARD_LIST_LINE_H;
     }
@@ -423,8 +422,8 @@ void draw_boards_view(void)
     if (board_list.count == 0) {
         SetAPen(rp, COLOR_TEXT);
         SetBPen(rp, COLOR_BACKGROUND);
-        Move(rp, 200, 120);
-        Text(rp, (CONST_STRPTR)get_string(MSG_BOARDS_NO_BOARDS_FOUND), strlen(get_string(MSG_BOARDS_NO_BOARDS_FOUND)));
+        draw_text_clipped(200, 120, get_string(MSG_BOARDS_NO_BOARDS_FOUND),
+                          SCREEN_WIDTH - 204);
     }
 
     /* Draw bottom buttons */
