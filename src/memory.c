@@ -493,7 +493,9 @@ void memory_view_handle_button(ButtonID id)
             if (app->memory_region_index >= 0 &&
                 app->memory_region_index < (LONG)memory_regions.count) {
                 show_status_overlay(get_string(MSG_MEASURING_SPEED));
+                Forbid();
                 measure_memory_speed(app->memory_region_index);
+                Permit();
                 hide_status_overlay();
             }
             break;

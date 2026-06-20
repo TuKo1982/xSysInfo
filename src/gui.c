@@ -351,8 +351,11 @@ void main_view_handle_button(ButtonID id)
 
         case BTN_SPEED:
             show_status_overlay(get_string(MSG_MEASURING_SPEED));
+            Forbid();
             run_benchmarks();
-            update_hardware_text();
+            Permit();
+            // not needed, hide_status_overlay redraws us
+            //update_hardware_text();
             hide_status_overlay();
             break;
 
@@ -2222,9 +2225,6 @@ void show_status_overlay(const char *message)
     /* Hide mouse pointer with blank sprite */
     SetPointer(app->window, blank_pointer, 1, 1, 0, 0);
 
-    /* Disable multitasking */
-    Forbid();
-
     /* Draw shadow */
     //SetAPen(rp, COLOR_BUTTON_DARK);
     //RectFill(rp, dialog_x + 2, dialog_y + 2, dialog_x + dialog_w + 1, dialog_y + dialog_h + 1);
@@ -2249,9 +2249,6 @@ void show_status_overlay(const char *message)
  */
 void hide_status_overlay(void)
 {
-    /* Re-enable multitasking */
-    Permit();
-
     /* Restore mouse pointer */
     ClearPointer(app->window);
 
