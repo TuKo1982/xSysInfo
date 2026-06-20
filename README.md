@@ -46,6 +46,9 @@ The primary way to run `xSysInfo` on a real Amiga is via a GOTEK drive using the
 You can also run the ADF on an Amiga emulator (like WinUAE or FS-UAE).
 
 Additionally, the `xsysinfo` binary itself can be executed directly from the shell on a real Amiga or emulator.
+Run `xSysInfo BRIEF` from the shell to write a compact benchmark summary to the
+CLI output. Run `xSysInfo FULL` to write the full report format to the CLI
+output.
 
 ## Configuration
 

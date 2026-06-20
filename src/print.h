@@ -16,6 +16,9 @@
 
 /* Function prototypes */
 
+/* Export all information to a DOS file handle */
+BOOL export_to_handle(BPTR fh);
+
 /* Export all information to file */
 BOOL export_to_file(const char *filename);
 

@@ -521,13 +521,10 @@ void export_drives(BPTR fh)
 }
 
 /*
- * Export all information to file
+ * Export all information to a DOS file handle
  */
-BOOL export_to_file(const char *filename)
+BOOL export_to_handle(BPTR fh)
 {
-    BPTR fh;
-
-    fh = Open((STRPTR)filename, MODE_NEWFILE);
     if (!fh) {
         return FALSE;
     }
@@ -546,7 +543,24 @@ BOOL export_to_file(const char *filename)
     WRITE_LINE(fh, "                          End of " XSYSINFO_NAME " Report");
     WRITE_LINE(fh, "================================================================================");
 
+    return !export_write_failed;
+}
+
+/*
+ * Export all information to file
+ */
+BOOL export_to_file(const char *filename)
+{
+    BPTR fh;
+    BOOL ok;
+
+    fh = Open((STRPTR)filename, MODE_NEWFILE);
+    if (!fh) {
+        return FALSE;
+    }
+
+    ok = export_to_handle(fh);
     Close(fh);
 
-    return !export_write_failed;
+    return ok;
 }

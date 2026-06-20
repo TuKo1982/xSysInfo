@@ -35,6 +35,7 @@
 #include "boards.h"
 #include "drives.h"
 #include "benchmark.h"
+#include "print.h"
 #include "locale_str.h"
 #include "debug.h"
 
@@ -56,8 +57,11 @@ static struct WBStartup *wb_startup = NULL;
 /* Global debug flag */
 BOOL g_debug_enabled = FALSE;
 
-/* Text-only mode (no GUI, print results to stdout) */
-static BOOL g_text_mode = FALSE;
+/* Brief mode (no GUI, print compact benchmark results to CLI output) */
+static BOOL g_brief_mode = FALSE;
+
+/* Full mode (no GUI, export full report to CLI output) */
+static BOOL g_full_mode = FALSE;
 
 /* Global application context */
 AppContext app_context;
@@ -70,11 +74,13 @@ struct TextAttr Topaz8Font = {
 AppContext *app = &app_context;
 
 /* Command line argument template */
-#define TEMPLATE "DEBUG/S"
+#define TEMPLATE "DEBUG/S,BRIEF/S,FULL/S"
 
 /* Argument array indices */
 enum {
     ARG_DEBUG,
+    ARG_BRIEF,
+    ARG_FULL,
     ARG_COUNT
 };
 
@@ -148,8 +154,10 @@ static BOOL parse_args(int argc, char **argv)
         for (int i = 1; i < argc; i++) {
             if (xstricmp(argv[i], "debug") == 0)
                 g_debug_enabled = TRUE;
-            else if (xstricmp(argv[i], "text") == 0)
-                g_text_mode = TRUE;
+            else if (xstricmp(argv[i], "brief") == 0)
+                g_brief_mode = TRUE;
+            else if (xstricmp(argv[i], "full") == 0)
+                g_full_mode = TRUE;
         }
     }
     return TRUE;
@@ -194,9 +202,9 @@ static void parse_tooltypes(void)
             g_debug_enabled = TRUE;
         }
 
-        /* Check for TEXT tooltype */
-        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"TEXT")) {
-            g_text_mode = TRUE;
+        /* Check for BRIEF tooltype */
+        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"BRIEF")) {
+            g_brief_mode = TRUE;
         }
 
         FreeDiskObject(dobj);
@@ -279,7 +287,18 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    if (!g_text_mode) {
+    if (g_full_mode) {
+        BPTR output = Output();
+
+        debug(XSYSINFO_NAME ": Running benchmarks for full CLI output...\n");
+        run_benchmarks();
+
+        debug(XSYSINFO_NAME ": Exporting full report to CLI output...\n");
+        if (!output || !export_to_handle(output)) {
+            Printf((CONST_STRPTR)"Failed to export report\n");
+            ret = RETURN_FAIL;
+        }
+    } else if (!g_brief_mode) {
         debug(XSYSINFO_NAME ": Opening display...\n");
         if (!open_display()) {
             Printf((CONST_STRPTR)"%s\n", (LONG)get_string(MSG_ERR_NO_WINDOW));
