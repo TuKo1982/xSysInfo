@@ -209,11 +209,19 @@ ULONG get_display_block_size(const DriveInfo *drive)
 {
     if (!drive) return 0;
 
+    if (drive->bytes_per_block) {
+        return drive->bytes_per_block;
+    }
+
     if (drive->has_info && drive->info_bytes_per_block) {
+        if (is_ofs_filesystem(drive->fs_type) &&
+            drive->info_bytes_per_block > OFS_BLOCK_OVERHEAD) {
+            return drive->info_bytes_per_block + OFS_BLOCK_OVERHEAD;
+        }
         return drive->info_bytes_per_block;
     }
 
-    return drive->bytes_per_block;
+    return 0;
 }
 
 ULONG get_filesystem_block_size(const DriveInfo *drive)
@@ -571,25 +579,40 @@ static void query_drive_details(void)
         }
 
         if (Info(lock, info)) {
+            FilesystemType info_fs_type;
+
             drive->info_total_blocks = info->id_NumBlocks;
             drive->info_blocks_used = info->id_NumBlocksUsed;
             drive->info_bytes_per_block = info->id_BytesPerBlock;
             drive->info_disk_type = info->id_DiskType;
             drive->has_info = TRUE;
+            info_fs_type = identify_filesystem(drive->info_disk_type);
 
             drive->total_blocks = drive->info_total_blocks;
             drive->blocks_used = drive->info_blocks_used;
             /* Preserve DosEnvec geometry size for raw device I/O if present. */
             if (drive->bytes_per_block == 0) {
-                drive->bytes_per_block = drive->info_bytes_per_block;
+                if (is_ofs_filesystem(info_fs_type) &&
+                    drive->info_bytes_per_block > OFS_BLOCK_OVERHEAD) {
+                    drive->bytes_per_block =
+                        drive->info_bytes_per_block + OFS_BLOCK_OVERHEAD;
+                } else {
+                    drive->bytes_per_block = drive->info_bytes_per_block;
+                }
             }
             if (drive->filesystem_bytes_per_block == 0) {
-                drive->filesystem_bytes_per_block =
-                    drive->info_bytes_per_block;
+                if (is_ofs_filesystem(info_fs_type) &&
+                    drive->info_bytes_per_block > OFS_BLOCK_OVERHEAD) {
+                    drive->filesystem_bytes_per_block =
+                        drive->info_bytes_per_block + OFS_BLOCK_OVERHEAD;
+                } else {
+                    drive->filesystem_bytes_per_block =
+                        drive->info_bytes_per_block;
+                }
             }
             if (!drive->has_dos_type) {
                 drive->dos_type = drive->info_disk_type;
-                drive->fs_type = identify_filesystem(drive->info_disk_type);
+                drive->fs_type = info_fs_type;
                 drive->has_dos_type = TRUE;
             }
             drive->disk_errors = info->id_NumSoftErrors;
