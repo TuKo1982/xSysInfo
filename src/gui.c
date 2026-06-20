@@ -2189,7 +2189,12 @@ void switch_to_view(ViewMode view)
             app->memory_region_index = 0;
             break;
         case VIEW_DRIVES:
-            app->selected_drive = drive_list.count > 0 ? 0 : -1;
+            if (drive_list.count == 0) {
+                app->selected_drive = -1;
+            } else if (app->selected_drive < 0 ||
+                       app->selected_drive >= (LONG)drive_list.count) {
+                app->selected_drive = 0;
+            }
             break;
         case VIEW_BOARDS:
             app->board_scroll = 0;
