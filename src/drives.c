@@ -879,12 +879,12 @@ static BOOL nsd_supports_read64(struct IOStdReq *io)
 
     error = DoIO((struct IORequest *)io);
     if (error != 0 || io->io_Actual < 16 ||
-        nsdqr.DeviceType != NSDEVTYPE_TRACKDISK ||
-        !nsdqr.SupportedCommands) {
+        nsdqr.nsdqr_DeviceType != NSDEVTYPE_TRACKDISK ||
+        !nsdqr.nsdqr_SupportedCommands) {
         return FALSE;
     }
 
-    for (cmd = nsdqr.SupportedCommands; *cmd; cmd++) {
+    for (cmd = (UWORD *)nsdqr.nsdqr_SupportedCommands; *cmd; cmd++) {
         if (*cmd == NSCMD_TD_READ64) return TRUE;
     }
     return FALSE;
