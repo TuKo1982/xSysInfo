@@ -28,7 +28,7 @@ typedef struct {
     UWORD manufacturer_id;
     UWORD product_id;
     BoardType board_type;
-    LONG serial_number;
+    ULONG serial_number;
     char product_name[64];
     char manufacturer_name[64];
     char size_string[16];       /* Human-readable size */

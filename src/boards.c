@@ -42,6 +42,8 @@ typedef struct {
 /* Global board list */
 BoardList board_list;
 
+#define BOARD_SERIAL_HEX_THRESHOLD 100000UL
+
 /* External references */
 extern AppContext *app;
 extern struct Library *IdentifyBase;
@@ -57,6 +59,15 @@ void format_board_size(ULONG size, char *buffer, ULONG bufsize)
         snprintf(buffer, bufsize, "%luK", (unsigned long)(size / 1024));
     } else {
         snprintf(buffer, bufsize, "%lu", (unsigned long)size);
+    }
+}
+
+static void format_board_serial(ULONG serial, char *buffer, ULONG bufsize)
+{
+    if (serial >= BOARD_SERIAL_HEX_THRESHOLD) {
+        snprintf(buffer, bufsize, "$%08lX", (unsigned long)serial);
+    } else {
+        snprintf(buffer, bufsize, "%lu", (unsigned long)serial);
     }
 }
 
@@ -91,7 +102,7 @@ static BOOL append_zorro_board(struct ConfigDev *cd, const char *manufacturer,
     board->board_size = cd->cd_BoardSize;
     board->manufacturer_id = cd->cd_Rom.er_Manufacturer;
     board->product_id = cd->cd_Rom.er_Product;
-    board->serial_number = cd->cd_Rom.er_SerialNumber;
+    board->serial_number = (ULONG)cd->cd_Rom.er_SerialNumber;
 
     debug("  boards: Found Zorro board at $%08X\n",
           (ULONG)board->board_address);
@@ -107,8 +118,8 @@ static BOOL append_zorro_board(struct ConfigDev *cd, const char *manufacturer,
                       sizeof(board->size_string));
     snprintf(board->address_string, sizeof(board->address_string),
              "$%08lX", (unsigned long)board->board_address);
-    snprintf(board->detail_string, sizeof(board->detail_string), "%ld",
-             (long)board->serial_number);
+    format_board_serial(board->serial_number, board->detail_string,
+                        sizeof(board->detail_string));
 
     if (manufacturer && manufacturer[0]) {
         snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
