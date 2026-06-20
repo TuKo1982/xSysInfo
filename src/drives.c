@@ -779,6 +779,10 @@ static BOOL drive_buffer_matches_mask(APTR buffer, ULONG size, ULONG mask)
 {
     ULONG start;
     ULONG end;
+    ULONG disallowed;
+    ULONG low_disallowed = 0;
+    ULONG bit = 1;
+    ULONG range_disallowed;
 
     if (!buffer || size == 0 || mask == 0) {
         return TRUE;
@@ -790,7 +794,20 @@ static BOOL drive_buffer_matches_mask(APTR buffer, ULONG size, ULONG mask)
         return FALSE;
     }
 
-    return ((start & ~mask) == 0 && (end & ~mask) == 0);
+    /*
+     * Low zero bits in de_Mask express buffer-start alignment, not that
+     * every byte in the transfer range must keep those bits clear.  A mask
+     * such as $7ffffffe accepts an even buffer start below 2 GB; checking
+     * the last byte against bit 0 would reject every even-sized transfer.
+     */
+    disallowed = ~mask;
+    while (bit != 0 && (mask & bit) == 0) {
+        low_disallowed |= bit;
+        bit <<= 1;
+    }
+    range_disallowed = disallowed & ~low_disallowed;
+
+    return ((start & disallowed) == 0 && (end & range_disallowed) == 0);
 }
 
 static APTR alloc_masked_drive_buffer(ULONG size, ULONG flags, ULONG mask,
