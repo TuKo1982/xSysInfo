@@ -50,6 +50,7 @@ RAMSEY_CTRL EQU $DE0003
 	XDEF	_SetCPUReg
 	XDEF	_GetCPU060;
 	XDEF	_GetVBR
+	XDEF	_GetSSP
 	XDEF	_GetMMU
 	XDEF	_GetCacheBits
 	XDEF	_SetCacheBits
@@ -239,6 +240,18 @@ _GetVBR:
 
 _readvbr:
 	movec	VBR,d0
+	rte
+
+_GetSSP:
+	movem.l	a5/a6,-(sp)
+	lea.l	_readssp,a5
+	move.l	$4.w,a6
+	jsr	_LVOSupervisor(a6)
+	movem.l	(sp)+,a5/a6
+	rts
+
+_readssp:
+	move.l	a7,d0
 	rte
 
 

@@ -186,6 +186,7 @@ typedef struct {
 
     /* VBR */
     ULONG vbr;
+    ULONG ssp;
 
     /* Cache status */
     BOOL has_icache;
@@ -236,6 +237,7 @@ typedef struct {
     BattMemData battMemData;
 
     /* System info */
+    char amiga_model_string[64];
     BOOL has_zorro_slots;
     BOOL has_pcmcia;
     char card_slot_string[32];
@@ -271,17 +273,20 @@ void refresh_cache_status(void);
 
 /* Individual detection functions */
 BOOL detect_emu68_systems(void);
+void detect_amiga_model(void);
 void detect_cpu(void);
 void detect_fpu(void);
 void detect_mmu(void);
 void load_mmu_remap_table(void);
 APTR mmu_physical_address(APTR addr);
 void read_vbr(void);
+void read_ssp(void);
 void detect_chipset(void);
 void detect_clock(void);
 void detect_batt_mem(void);
 void detect_gary(void);
 void detect_ramsey(void);
+void format_ramsey_rev_string(char *buffer, ULONG size);
 void detect_sdmac(void);
 void detect_system_chips(void);
 void detect_frequencies(void);

@@ -84,6 +84,9 @@ MMU
 MSG_VBR
 VBR
 ;
+MSG_SSP
+SSP
+;
 MSG_COMMENT
 Megjegyz.
 ;
@@ -577,6 +580,9 @@ Mit is mondhatnék!
 ;
 MSG_HARDWARE_STD
 ÁTTEK
+;
+MSG_HARDWARE_CPU
+CPU
 ;
 MSG_HARDWARE_EXT
 CHIPSET

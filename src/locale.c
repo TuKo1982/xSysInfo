@@ -53,6 +53,7 @@ static const char *default_strings[MSG_COUNT] = {
     /* MSG_FPU */                    "FPU",
     /* MSG_MMU */                    "MMU",
     /* MSG_VBR */                    "VBR",
+    /* MSG_SSP */                    "SSP",
     /* MSG_COMMENT */                "Comment",
     /* MSG_HORIZ_KHZ */              "Horiz KHz",
     /* MSG_ECLOCK_HZ */              "EClock Hz",
@@ -243,6 +244,7 @@ static const char *default_strings[MSG_COUNT] = {
 
     /* Hardware toggle */
     /* MSG_HARDWARE_STD */           "OVERVIEW",
+    /* MSG_HARDWARE_CPU */           "CPU",
     /* MSG_HARDWARE_EXT */           "CHIPSET",
     /* MSG_RAMSEY_CTRL */            "Ramsey control",
     /* MSG_SDMAC_REV */              "SCSI chip",

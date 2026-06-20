@@ -53,6 +53,15 @@ int num_buttons = 0;
 static char icache_label[16], dcache_label[16], iburst_label[16];
 static char dburst_label[16], cback_label[16], super_scalar_label[16];
 
+#define CACHE_BTN_X (HARDWARE_PANEL_X + 226)
+#define CACHE_BTN_W 32
+#define CACHE_BTN_H 11
+#define CACHE_ROW_Y0 (HARDWARE_PANEL_Y + 60)
+#define CACHE_LABEL_Y0 (CACHE_ROW_Y0 + 8)
+#define CACHE_ROW_STEP 11
+#define HARDWARE_OVERVIEW_VALUE_OFFSET 90
+#define HARDWARE_CHIPSET_VALUE_OFFSET 124
+
 #define XSYSINFO_LOGO_W     104
 #define XSYSINFO_LOGO_H     16
 #define XSYSINFO_LOGO_BPR   14
@@ -90,6 +99,12 @@ static void update_software_list(void);
 static void update_hardware_text(void);
 static void refresh_all_cache_buttons(void);
 static void show_timed_overlay(const char *message, ULONG ticks);
+static const char *get_hardware_page_label(void);
+static void update_cache_button_enabled_states(void);
+static void format_cpu_value(char *buffer, size_t size);
+static void format_fpu_value(char *buffer, size_t size);
+static void format_mmu_value(char *buffer, size_t size);
+static void format_mmu_address(char *buffer, size_t size, ULONG address);
 
 void format_scaled(char *buffer, size_t size, ULONG value_x100, BOOL round)
 {
@@ -178,6 +193,40 @@ Button *find_button(ButtonID id)
     return NULL;
 }
 
+static const char *get_hardware_page_label(void)
+{
+    switch (app->hardware_type) {
+        case HARDWARE_CPU:
+            return get_string(MSG_HARDWARE_CPU);
+        case HARDWARE_EXT:
+            return get_string(MSG_HARDWARE_EXT);
+        case HARDWARE_STD:
+        default:
+            return get_string(MSG_HARDWARE_STD);
+    }
+}
+
+static void set_button_enabled(ButtonID id, BOOL enabled)
+{
+    Button *btn = find_button(id);
+    if (btn) {
+        btn->enabled = enabled;
+    }
+}
+
+static void update_cache_button_enabled_states(void)
+{
+    BOOL cpu_page = app->hardware_type == HARDWARE_CPU;
+
+    set_button_enabled(BTN_ICACHE, cpu_page && hw_info.has_icache);
+    set_button_enabled(BTN_DCACHE, cpu_page && hw_info.has_dcache);
+    set_button_enabled(BTN_IBURST, cpu_page && hw_info.has_iburst);
+    set_button_enabled(BTN_DBURST, cpu_page && hw_info.has_dburst);
+    set_button_enabled(BTN_CBACK, cpu_page && hw_info.has_copyback);
+    set_button_enabled(BTN_SUPER_SCALAR,
+                       cpu_page && hw_info.has_super_scalar);
+}
+
 /*
  * Set button pressed state and redraw it
  */
@@ -261,70 +310,67 @@ void main_view_update_buttons(void)
                BTN_SCALE_TOGGLE, TRUE);
 
      /* Hardware type cycle button */
-    add_button(HARDWARE_PANEL_X + HARDWARE_PANEL_W - 80,
-               HARDWARE_PANEL_Y + 2, 78, 12,
-               app->hardware_type == HARDWARE_STD ?
-                   get_string(MSG_HARDWARE_STD) :
-                   get_string(MSG_HARDWARE_EXT),
+    add_button(HARDWARE_PANEL_X + HARDWARE_PANEL_W - 84,
+               HARDWARE_PANEL_Y + 2, 82, 12,
+               get_hardware_page_label(),
                BTN_HARDWARE_CYCLE, TRUE);
 
-    /* Inline cache toggle buttons in hardware panel (right column) */
-    /* Button shows only "ON"/"OFF"/"N/A", label is drawn separately */
-    /* Cache rows use 11px spacing (8+3) so buttons don't overlap */
-    /* Button positioned after the label at x+56 */
-    #define CACHE_BTN_X (HARDWARE_PANEL_X + 170 + 56)
-    #define CACHE_BTN_W 32
-    #define CACHE_BTN_H 11
+    if (app->hardware_type == HARDWARE_CPU) {
+        /* Inline cache toggle buttons in hardware panel. */
+        snprintf(icache_label, sizeof(icache_label), "%s",
+                 hw_info.has_icache ?
+                     (hw_info.icache_enabled ? get_string(MSG_ON) :
+                                               get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
+        snprintf(dcache_label, sizeof(dcache_label), "%s",
+                 hw_info.has_dcache ?
+                     (hw_info.dcache_enabled ? get_string(MSG_ON) :
+                                               get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
+        snprintf(iburst_label, sizeof(iburst_label), "%s",
+                 hw_info.has_iburst ?
+                     (hw_info.iburst_enabled ? get_string(MSG_ON) :
+                                               get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
+        snprintf(dburst_label, sizeof(dburst_label), "%s",
+                 hw_info.has_dburst ?
+                     (hw_info.dburst_enabled ? get_string(MSG_ON) :
+                                               get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
+        snprintf(cback_label, sizeof(cback_label), "%s",
+                 hw_info.has_copyback ?
+                     (hw_info.copyback_enabled ? get_string(MSG_ON) :
+                                                 get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
+        snprintf(super_scalar_label, sizeof(super_scalar_label), "%s",
+                 hw_info.has_super_scalar ?
+                     (hw_info.super_scalar_enabled ? get_string(MSG_ON) :
+                                                     get_string(MSG_OFF)) :
+                     get_string(MSG_NA));
 
-    /* Build status-only labels */
-    snprintf(icache_label, sizeof(icache_label), "%s",
-             hw_info.has_icache ?
-                 (hw_info.icache_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
-    snprintf(dcache_label, sizeof(dcache_label), "%s",
-             hw_info.has_dcache ?
-                 (hw_info.dcache_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
-    snprintf(iburst_label, sizeof(iburst_label), "%s",
-             hw_info.has_iburst ?
-                 (hw_info.iburst_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
-    snprintf(dburst_label, sizeof(dburst_label), "%s",
-             hw_info.has_dburst ?
-                 (hw_info.dburst_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
-    snprintf(cback_label, sizeof(cback_label), "%s",
-             hw_info.has_copyback ?
-                 (hw_info.copyback_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
-    snprintf(super_scalar_label, sizeof(super_scalar_label), "%s",
-             hw_info.has_super_scalar ?
-                 (hw_info.super_scalar_enabled ? get_string(MSG_ON) : get_string(MSG_OFF)) :
-                 get_string(MSG_NA));
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0, CACHE_BTN_W, CACHE_BTN_H,
+                   icache_label, BTN_ICACHE, FALSE);
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0 + CACHE_ROW_STEP, CACHE_BTN_W,
+                   CACHE_BTN_H, dcache_label, BTN_DCACHE, FALSE);
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0 + CACHE_ROW_STEP * 2,
+                   CACHE_BTN_W, CACHE_BTN_H, iburst_label, BTN_IBURST, FALSE);
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0 + CACHE_ROW_STEP * 3,
+                   CACHE_BTN_W, CACHE_BTN_H, dburst_label, BTN_DBURST,
+                   FALSE);
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0 + CACHE_ROW_STEP * 4,
+                   CACHE_BTN_W, CACHE_BTN_H, cback_label, BTN_CBACK, FALSE);
+        add_button(CACHE_BTN_X, CACHE_ROW_Y0 + CACHE_ROW_STEP * 5,
+                   CACHE_BTN_W, CACHE_BTN_H, super_scalar_label,
+                   BTN_SUPER_SCALAR, FALSE);
+        update_cache_button_enabled_states();
 
-    /* Use explicit Y values to avoid any macro expansion issues */
-    /* Base Y = 116 (cache block shifted up 4px so CBack aligns with Card Slot) */
-    /* Use has_* for enabled state (determines if button is clickable) */
-    add_button(CACHE_BTN_X, 124, CACHE_BTN_W, CACHE_BTN_H,
-               icache_label, BTN_ICACHE, hw_info.has_icache);
-    add_button(CACHE_BTN_X, 135, CACHE_BTN_W, CACHE_BTN_H,
-               dcache_label, BTN_DCACHE, hw_info.has_dcache);
-    add_button(CACHE_BTN_X, 146, CACHE_BTN_W, CACHE_BTN_H,
-               iburst_label, BTN_IBURST, hw_info.has_iburst);
-    add_button(CACHE_BTN_X, 157, CACHE_BTN_W, CACHE_BTN_H,
-               dburst_label, BTN_DBURST, hw_info.has_dburst);
-    add_button(CACHE_BTN_X, 168, CACHE_BTN_W, CACHE_BTN_H,
-               cback_label, BTN_CBACK, hw_info.has_copyback);
-    add_button(CACHE_BTN_X, 179, CACHE_BTN_W, CACHE_BTN_H,
-               super_scalar_label, BTN_SUPER_SCALAR, hw_info.has_super_scalar);
-
-    /* Set pressed state based on whether each cache is enabled */
-    set_button_pressed(BTN_ICACHE, hw_info.icache_enabled);
-    set_button_pressed(BTN_DCACHE, hw_info.dcache_enabled);
-    set_button_pressed(BTN_IBURST, hw_info.iburst_enabled);
-    set_button_pressed(BTN_DBURST, hw_info.dburst_enabled);
-    set_button_pressed(BTN_CBACK, hw_info.copyback_enabled);
-    set_button_pressed(BTN_SUPER_SCALAR, hw_info.super_scalar_enabled);
+        set_button_pressed(BTN_ICACHE, hw_info.icache_enabled);
+        set_button_pressed(BTN_DCACHE, hw_info.dcache_enabled);
+        set_button_pressed(BTN_IBURST, hw_info.iburst_enabled);
+        set_button_pressed(BTN_DBURST, hw_info.dburst_enabled);
+        set_button_pressed(BTN_CBACK, hw_info.copyback_enabled);
+        set_button_pressed(BTN_SUPER_SCALAR, hw_info.super_scalar_enabled);
+    }
 }
 
 /*
@@ -380,7 +426,8 @@ void main_view_handle_button(ButtonID id)
             update_software_list();
             break;
         case BTN_HARDWARE_CYCLE:
-            app->hardware_type = (app->hardware_type + 1) % 2;
+            app->hardware_type =
+                (app->hardware_type + 1) % HARDWARE_COUNT;
             update_hardware_text();
             break;
 
@@ -982,6 +1029,70 @@ void draw_label_value(WORD x, WORD y, const char *label, const char *value, WORD
     draw_label_value_max(x, y, label, value, offset, SCREEN_WIDTH - 4);
 }
 
+static void format_cpu_value(char *buffer, size_t size)
+{
+    char mhz_buf[16];
+
+    if (hw_info.cpu_mhz > 0)
+        format_scaled(mhz_buf, sizeof(mhz_buf), hw_info.cpu_mhz, FALSE);
+    else
+        mhz_buf[0] = 0;
+
+    if (hw_info.cpu_revision[0] != '\0' &&
+        strcmp(hw_info.cpu_revision, "N/A") != 0) {
+        snprintf(buffer, size, "%s (%s) %s",
+                 hw_info.cpu_string, hw_info.cpu_revision, mhz_buf);
+    } else {
+        snprintf(buffer, size, "%s %s", hw_info.cpu_string, mhz_buf);
+    }
+}
+
+static void format_fpu_value(char *buffer, size_t size)
+{
+    if (hw_info.fpu_type != FPU_NONE && hw_info.fpu_mhz > 0) {
+        char mhz_buf[16];
+
+        format_scaled(mhz_buf, sizeof(mhz_buf), hw_info.fpu_mhz, FALSE);
+        if (hw_info.fpu_enabled) {
+            snprintf(buffer, size, "%s %s", hw_info.fpu_string, mhz_buf);
+        } else {
+            snprintf(buffer, size, "%s %s (%s)",
+                     hw_info.fpu_string, mhz_buf, get_string(MSG_OFF));
+        }
+    } else {
+        /* The (Off) suffix only makes sense when an FPU is present;
+         * a plain 68000 has nothing to switch off (issue #26). */
+        if (hw_info.fpu_enabled || hw_info.fpu_type == FPU_NONE) {
+            snprintf(buffer, size, "%s", hw_info.fpu_string);
+        } else {
+            snprintf(buffer, size, "%s (%s)",
+                     hw_info.fpu_string, get_string(MSG_OFF));
+        }
+    }
+}
+
+static void format_mmu_value(char *buffer, size_t size)
+{
+    if (hw_info.mmu_enabled) {
+        snprintf(buffer, size, "%s (%s)",
+                 hw_info.mmu_string, get_string(MSG_IN_USE));
+    } else {
+        copy_string(buffer, hw_info.mmu_string, size);
+    }
+}
+
+static void format_mmu_address(char *buffer, size_t size, ULONG address)
+{
+    APTR phys = mmu_physical_address((APTR)address);
+
+    if (phys != (APTR)address) {
+        snprintf(buffer, size, "$%08lX ->%s", (unsigned long)address,
+                 get_location_string(determine_mem_location(phys)));
+    } else {
+        snprintf(buffer, size, "$%08lX", (unsigned long)address);
+    }
+}
+
 /* Forward declaration */
 static void update_software_list(void);
 
@@ -1007,22 +1118,24 @@ static void draw_software_panel(void)
 }
 
 /*
- * Update hardware text content only (no panel redraw)
- * Used for partial refresh when cycling through types
+ * Rebuild hardware-page buttons and redraw the hardware panel.
  */
 static void update_hardware_text(void)
 {
-    Button *hw_cycle_btn = find_button(BTN_HARDWARE_CYCLE);
+    Button *hw_cycle_btn;
+
+    update_button_states();
+    hw_cycle_btn = find_button(BTN_HARDWARE_CYCLE);
+
     if (hw_cycle_btn) {
-        const char *new_hw_label = app->hardware_type == HARDWARE_STD ?
-                                    get_string(MSG_HARDWARE_STD) :
-                                    get_string(MSG_HARDWARE_EXT);
+        const char *new_hw_label = get_hardware_page_label();
         if (hw_cycle_btn->label != new_hw_label) {
             hw_cycle_btn->label = new_hw_label;
             draw_cycle_button(hw_cycle_btn);
         }
     }
     draw_hardware_panel();
+    draw_bottom_buttons();
 }
 
 /*
@@ -1563,7 +1676,8 @@ static void draw_hardware_panel(void)
     if (app->hardware_type == HARDWARE_STD) {
         /* Clock */
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_CLOCK), hw_info.clock_string, 80);
+                         get_string(MSG_CLOCK), hw_info.clock_string,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* DMA/Gfx */
@@ -1627,12 +1741,14 @@ static void draw_hardware_panel(void)
                 break;
         }
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_DMA_GFX), buffer, 80);
+                         get_string(MSG_DMA_GFX), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Mode */
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_MODE), hw_info.mode_string, 80);
+                         get_string(MSG_MODE), hw_info.mode_string,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Display */
@@ -1662,7 +1778,8 @@ static void draw_hardware_panel(void)
         }
 
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_DISPLAY), buffer, 80);
+                         get_string(MSG_DISPLAY), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Sound */
@@ -1680,90 +1797,36 @@ static void draw_hardware_panel(void)
                       get_string(MSG_PAULA_UNKNOWN),hw_info.paula_rev);
                 break;
         }
-           draw_label_value(HARDWARE_PANEL_X + 4, y,
-            get_string(MSG_SOUND_SYSTEM), buffer, 80);
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_SOUND_SYSTEM), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* CPU/MHz */
-        if (hw_info.cpu_revision[0] != '\0' &&
-            strcmp(hw_info.cpu_revision, "N/A") != 0) {
-            char mhz_buf[16];
-            if (hw_info.cpu_mhz>0)
-                format_scaled(mhz_buf, sizeof(mhz_buf), hw_info.cpu_mhz, FALSE);
-            else
-                mhz_buf[0] = 0;
-            snprintf(buffer, sizeof(buffer), "%s (%s) %s",
-                     hw_info.cpu_string, hw_info.cpu_revision,
-                     mhz_buf);
-        } else {
-            char mhz_buf[16];
-            if (hw_info.cpu_mhz>0)
-                format_scaled(mhz_buf, sizeof(mhz_buf), hw_info.cpu_mhz, FALSE);
-            else
-                mhz_buf[0] = 0;
-            snprintf(buffer, sizeof(buffer), "%s %s",
-                     hw_info.cpu_string, mhz_buf);
-        }
+        format_cpu_value(buffer, sizeof(buffer));
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_CPU_MHZ), buffer, 80);
+                         get_string(MSG_CPU_MHZ), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* FPU */
-        if (hw_info.fpu_type != FPU_NONE && hw_info.fpu_mhz > 0) {
-            char mhz_buf[16];
-            format_scaled(mhz_buf, sizeof(mhz_buf), hw_info.fpu_mhz, FALSE);
-            if (hw_info.fpu_enabled) {
-                snprintf(buffer, sizeof(buffer), "%s %s",
-                         hw_info.fpu_string, mhz_buf);
-            } else {
-                snprintf(buffer, sizeof(buffer), "%s %s (%s)",
-                         hw_info.fpu_string, mhz_buf, get_string(MSG_OFF));
-            }
-        } else {
-            /* The (Off) suffix only makes sense when an FPU is present;
-             * a plain 68000 has nothing to switch off (issue #26) */
-            if (hw_info.fpu_enabled || hw_info.fpu_type == FPU_NONE) {
-                snprintf(buffer, sizeof(buffer), "%s",
-                         hw_info.fpu_string);
-            } else {
-                snprintf(buffer, sizeof(buffer), "%s (%s)",
-                         hw_info.fpu_string, get_string(MSG_OFF));
-            }
-        }
+        format_fpu_value(buffer, sizeof(buffer));
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_FPU), buffer, 80);
+                         get_string(MSG_FPU), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* MMU */
-        if (hw_info.mmu_enabled) {
-            snprintf(buffer, sizeof(buffer), "%s (%s)",
-                     hw_info.mmu_string, get_string(MSG_IN_USE));
-        } else {
-            copy_string(buffer, hw_info.mmu_string, sizeof(buffer));
-        }
+        format_mmu_value(buffer, sizeof(buffer));
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_MMU), buffer, 80);
-        y += 8;
-
-        /* VBR - annotate the physical location when MMU-remapped */
-        {
-            APTR vbr_phys = mmu_physical_address((APTR)hw_info.vbr);
-            if (vbr_phys != (APTR)hw_info.vbr) {
-                snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
-                         (unsigned long)hw_info.vbr,
-                         get_location_string(determine_mem_location(vbr_phys)));
-            } else {
-                snprintf(buffer, sizeof(buffer), "$%08lX",
-                         (unsigned long)hw_info.vbr);
-            }
-        }
-        draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_VBR), buffer, 80);
+                         get_string(MSG_MMU), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Comment */
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_COMMENT), hw_info.comment, 80);
+                         get_string(MSG_COMMENT), hw_info.comment,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Frequencies - left column continues */
@@ -1773,58 +1836,37 @@ static void draw_hardware_panel(void)
             format_scaled(buffer, sizeof(buffer), (ULONG)horiz_khz, FALSE);
         }
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_HORIZ_KHZ), buffer, 90);
+                         get_string(MSG_HORIZ_KHZ), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
 
         y += 8;
 
-        /* EClock - also start of cache section (separate y tracker with 11px spacing) */
+        /* EClock */
         snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)hw_info.eclock_freq);
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_ECLOCK_HZ), buffer, 90);
-        {
-            /* Cache column uses separate y with 11px spacing for buttons */
-            /* Start 4px higher so CBack aligns with Card Slot */
-            WORD cache_y = y - 4;
-            draw_label_value(HARDWARE_PANEL_X + 170, cache_y,
-                             get_string(MSG_ICACHE), NULL, 56);
-            cache_y += 11;
-            draw_label_value(HARDWARE_PANEL_X + 170, cache_y,
-                             get_string(MSG_DCACHE), NULL, 56);
-            cache_y += 11;
-            draw_label_value(HARDWARE_PANEL_X + 170, cache_y,
-                             get_string(MSG_IBURST), NULL, 56);
-            cache_y += 11;
-            draw_label_value(HARDWARE_PANEL_X + 170, cache_y,
-                             get_string(MSG_DBURST), NULL, 56);
-            cache_y += 11;
-            draw_label_value(HARDWARE_PANEL_X + 170, cache_y,
-                             get_string(MSG_CBACK), NULL, 56);
-            cache_y += 11;
-            draw_label_value(HARDWARE_PANEL_X + 50, cache_y,
-                             get_string(MSG_SUPER_SCALAR), NULL, 56);
-        }
+                         get_string(MSG_ECLOCK_HZ), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Vert Hz */
         snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)hw_info.vert_freq);
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_VERT_HZ), buffer, 90);
+                         get_string(MSG_VERT_HZ), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Supply Hz */
         snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)hw_info.supply_freq);
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_SUPPLY_HZ), buffer, 90);
+                         get_string(MSG_SUPPLY_HZ), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Ramsey */
-        if (hw_info.ramsey_rev) {
-            snprintf(buffer, sizeof(buffer), "%02X", hw_info.ramsey_rev);
-        } else {
-            copy_string(buffer, get_string(MSG_NA), sizeof(buffer));
-        }
+        format_ramsey_rev_string(buffer, sizeof(buffer));
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_RAMSEY_REV), buffer, 90);
+                         get_string(MSG_RAMSEY_REV), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Gary */
@@ -1847,26 +1889,83 @@ static void draw_hardware_panel(void)
                 break;
         }
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_GARY_REV), buffer, 90);
+                         get_string(MSG_GARY_REV), buffer,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
         y += 8;
 
         /* Card Slot */
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_CARD_SLOT), hw_info.card_slot_string, 90);
-        /* Cache toggle buttons are drawn by draw_cache_buttons() */
+                         get_string(MSG_CARD_SLOT), hw_info.card_slot_string,
+                         HARDWARE_OVERVIEW_VALUE_OFFSET);
+        y += 8;
+
+        if (strcmp(hw_info.amiga_model_string, get_string(MSG_NA)) != 0) {
+            draw_label_value(HARDWARE_PANEL_X + 4, y,
+                             "Amiga", hw_info.amiga_model_string,
+                             HARDWARE_OVERVIEW_VALUE_OFFSET);
+        }
+    } else if (app->hardware_type == HARDWARE_CPU) {
+        WORD cache_y;
+
+        format_cpu_value(buffer, sizeof(buffer));
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_CPU_MHZ), buffer, 80);
+        y += 8;
+
+        format_fpu_value(buffer, sizeof(buffer));
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_FPU), buffer, 80);
+        y += 8;
+
+        format_mmu_value(buffer, sizeof(buffer));
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_MMU), buffer, 80);
+        y += 8;
+
+        format_mmu_address(buffer, sizeof(buffer), hw_info.vbr);
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_VBR), buffer, 80);
+        y += 8;
+
+        format_mmu_address(buffer, sizeof(buffer), hw_info.ssp);
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         get_string(MSG_SSP), buffer, 80);
+        y += 16;
+
+        cache_y = CACHE_LABEL_Y0;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_ICACHE), NULL, 0,
+                             CACHE_BTN_X - 4);
+        cache_y += CACHE_ROW_STEP;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_DCACHE), NULL, 0,
+                             CACHE_BTN_X - 4);
+        cache_y += CACHE_ROW_STEP;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_IBURST), NULL, 0,
+                             CACHE_BTN_X - 4);
+        cache_y += CACHE_ROW_STEP;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_DBURST), NULL, 0,
+                             CACHE_BTN_X - 4);
+        cache_y += CACHE_ROW_STEP;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_CBACK), NULL, 0,
+                             CACHE_BTN_X - 4);
+        cache_y += CACHE_ROW_STEP;
+        draw_label_value_max(HARDWARE_PANEL_X + 4, cache_y,
+                             get_string(MSG_SUPER_SCALAR), NULL, 0,
+                             CACHE_BTN_X - 4);
         draw_cache_buttons();
-    }else { //extended hw-info
+    } else { // extended hw-info
         draw_label_value(HARDWARE_PANEL_X + 4, y,
                          get_string(MSG_EXT_INFO), NULL, 120);
         y += 8;
         /* Ramsey */
-           if (hw_info.ramsey_rev) {
-            snprintf(buffer, sizeof(buffer), "%02X", (unsigned char)hw_info.ramsey_rev);
-        } else {
-            copy_string(buffer, get_string(MSG_NA), sizeof(buffer));
-        }
+        format_ramsey_rev_string(buffer, sizeof(buffer));
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_RAMSEY_REV), buffer, 120);
+                         get_string(MSG_RAMSEY_REV), buffer,
+                         HARDWARE_CHIPSET_VALUE_OFFSET);
         y += 8;
         if (hw_info.ramsey_rev) {
             /* Ramsey status */
@@ -1970,7 +2069,8 @@ static void draw_hardware_panel(void)
             copy_string(buffer, get_string(MSG_NA), sizeof(buffer));
         }
         draw_label_value(HARDWARE_PANEL_X + 4, y,
-                         get_string(MSG_SDMAC_REV), buffer, 120);
+                         get_string(MSG_SDMAC_REV), buffer,
+                         HARDWARE_CHIPSET_VALUE_OFFSET);
         y += 8;
 
     }
@@ -1995,6 +2095,10 @@ static void draw_bottom_buttons(void)
 static void draw_cache_buttons(void)
 {
     int i;
+
+    if (app->hardware_type != HARDWARE_CPU)
+        return;
+
     for (i = 0; i < num_buttons; i++) {
         if (buttons[i].id >= BTN_ICACHE && buttons[i].id <= BTN_SUPER_SCALAR) {
             draw_button(&buttons[i]);
@@ -2044,6 +2148,7 @@ static void refresh_all_cache_buttons(void)
     set_button_pressed(BTN_DBURST, hw_info.dburst_enabled);
     set_button_pressed(BTN_CBACK, hw_info.copyback_enabled);
     set_button_pressed(BTN_SUPER_SCALAR, hw_info.super_scalar_enabled);
+    update_cache_button_enabled_states();
 
     /* Redraw all cache buttons */
     draw_cache_buttons();

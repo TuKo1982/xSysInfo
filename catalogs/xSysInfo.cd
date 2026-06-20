@@ -82,6 +82,9 @@ MMU
 MSG_VBR (//)
 VBR
 ;
+MSG_SSP (//)
+SSP
+;
 MSG_COMMENT (//)
 Comment
 ;
@@ -575,6 +578,9 @@ What can I say!
 ;
 MSG_HARDWARE_STD (//)
 OVERVIEW
+;
+MSG_HARDWARE_CPU (//)
+CPU
 ;
 MSG_HARDWARE_EXT (//)
 CHIPSET

@@ -40,6 +40,7 @@ ULONG GetCacheBits(void);
 ULONG SetCacheBits( ULONG value __asm("d1"),ULONG mask __asm("d2")) ;
 ULONG GetCPU060(void);
 ULONG GetVBR(void);
+ULONG GetSSP(void);
 ULONG GetMMU( ULONG cpuType __asm("d0"));
 UBYTE GetRamseyRev(void);
 UBYTE GetRamseyCtrl(void);

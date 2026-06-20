@@ -106,7 +106,9 @@ typedef enum {
 /* Software list types */
 typedef enum {
     HARDWARE_STD,
-    HARDWARE_EXT
+    HARDWARE_CPU,
+    HARDWARE_EXT,
+    HARDWARE_COUNT
 } HardwareType;
 
 

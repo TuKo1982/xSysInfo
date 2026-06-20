@@ -228,6 +228,8 @@ void export_hardware(BPTR fh)
     WRITE_LINE(fh, "=== HARDWARE INFORMATION ===");
     WRITE_LINE(fh, "");
     write_formatted(fh, "%-16s %s", "Clock:", hw_info.clock_string);
+    write_formatted(fh, "%-16s %s", "Amiga:",
+                    hw_info.amiga_model_string);
 
     /* DMA/Gfx */
     switch (hw_info.agnus_type)
@@ -349,17 +351,28 @@ void export_hardware(BPTR fh)
     write_formatted(fh, "%-16s %s", "MMU:", buffer);
 
     {
-        APTR vbr_phys = mmu_physical_address((APTR)hw_info.vbr);
-        if (vbr_phys != (APTR)hw_info.vbr) {
+        APTR phys = mmu_physical_address((APTR)hw_info.vbr);
+        if (phys != (APTR)hw_info.vbr)
             snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
                      (unsigned long)hw_info.vbr,
-                     get_location_string(determine_mem_location(vbr_phys)));
-        } else {
+                     get_location_string(determine_mem_location(phys)));
+        else
             snprintf(buffer, sizeof(buffer), "$%08lX",
                      (unsigned long)hw_info.vbr);
-        }
     }
     write_formatted(fh, "%-16s %s", "VBR:", buffer);
+
+    {
+        APTR phys = mmu_physical_address((APTR)hw_info.ssp);
+        if (phys != (APTR)hw_info.ssp)
+            snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
+                     (unsigned long)hw_info.ssp,
+                     get_location_string(determine_mem_location(phys)));
+        else
+            snprintf(buffer, sizeof(buffer), "$%08lX",
+                     (unsigned long)hw_info.ssp);
+    }
+    write_formatted(fh, "%-16s %s", "SSP:", buffer);
 
     write_formatted(fh, "%-16s %s", "Comment:", hw_info.comment);
 
@@ -373,11 +386,7 @@ void export_hardware(BPTR fh)
     snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)hw_info.eclock_freq);
     write_formatted(fh, "%-16s %s Hz", "EClock:", buffer);
 
-    if (hw_info.ramsey_rev) {
-        snprintf(buffer, sizeof(buffer), "%02x", hw_info.ramsey_rev);
-    } else {
-        strncpy(buffer, "N/A", sizeof(buffer) - 1);
-    }
+    format_ramsey_rev_string(buffer, sizeof(buffer));
     write_formatted(fh, "%-16s %s", "Ramsey Rev:", buffer);
 
     format_gary_string(buffer, sizeof(buffer));
@@ -411,11 +420,7 @@ void export_hardware(BPTR fh)
 
     WRITE_LINE(fh, "");
     WRITE_LINE(fh, "Extended Hardware:");
-    if (hw_info.ramsey_rev) {
-        snprintf(buffer, sizeof(buffer), "%02X", hw_info.ramsey_rev);
-    } else {
-        snprintf(buffer, sizeof(buffer), "N/A");
-    }
+    format_ramsey_rev_string(buffer, sizeof(buffer));
     write_formatted(fh, "  Ramsey Rev:     %s", buffer);
 
     if (hw_info.ramsey_rev) {

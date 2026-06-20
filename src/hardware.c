@@ -12,6 +12,7 @@
 #include <graphics/gfxbase.h>
 #include <hardware/cia.h>
 #include <hardware/custom.h>
+#include <libraries/identify.h>
 #include <resources/cia.h>
 #include <mmu/mmubase.h>
 #include <mmu/context.h>
@@ -23,6 +24,7 @@
 #include <proto/dos.h>
 #include <proto/mmu.h>
 #include <proto/expansion.h>
+#include <proto/identify.h>
 
 #include "xsysinfo.h"
 #include "hardware.h"
@@ -49,6 +51,9 @@ BOOL detect_hardware(void)
 
     memset(&hw_info, 0, sizeof(HardwareInfo));
 
+    debug("  hw: Detecting Amiga model...\n");
+    detect_amiga_model();
+
     if (!detect_emu68_systems()) {
         debug("  hw: Detecting CPU...\n");
         detect_cpu();
@@ -64,6 +69,8 @@ BOOL detect_hardware(void)
     load_mmu_remap_table();
     debug("  hw: Reading VBR...\n");
     read_vbr();
+    debug("  hw: Reading SSP...\n");
+    read_ssp();
     debug("  hw: Detecting chipset...\n");
     detect_chipset();
     debug("  hw: Detecting system chips...\n");
@@ -107,6 +114,27 @@ BOOL detect_hardware(void)
 
     debug("  hw: Hardware detection complete.\n");
     return TRUE;
+}
+
+void detect_amiga_model(void)
+{
+    STRPTR model = NULL;
+
+    copy_string(hw_info.amiga_model_string, get_string(MSG_NA),
+                sizeof(hw_info.amiga_model_string));
+
+    if (!IdentifyBase) {
+        return;
+    }
+
+    copy_string(hw_info.amiga_model_string, get_string(MSG_UNKNOWN),
+                sizeof(hw_info.amiga_model_string));
+
+    model = IdHardwareTags(IDHW_SYSTEM, TAG_DONE);
+    if (model && model[0]) {
+        copy_string(hw_info.amiga_model_string, (const char *)model,
+                    sizeof(hw_info.amiga_model_string));
+    }
 }
 
 
@@ -625,6 +653,11 @@ void read_vbr(void)
     }
 }
 
+void read_ssp(void)
+{
+    hw_info.ssp = GetSSP();
+}
+
 /*
  * Detect chipset (Agnus/Denise)
  */
@@ -872,6 +905,26 @@ void detect_batt_mem(void)
 /*
  * Detect Ramsey
  */
+void format_ramsey_rev_string(char *buffer, ULONG size)
+{
+    if (!hw_info.ramsey_rev) {
+        copy_string(buffer, get_string(MSG_NA), size);
+        return;
+    }
+
+    switch (hw_info.ramsey_rev) {
+        case 0x0d:
+            snprintf(buffer, size, "Ramsey 4 (0D)");
+            break;
+        case 0x0f:
+            snprintf(buffer, size, "Ramsey 7 (0F)");
+            break;
+        default:
+            snprintf(buffer, size, "Unknown (%02X)", hw_info.ramsey_rev);
+            break;
+    }
+}
+
 void detect_ramsey(void)
 {
 
