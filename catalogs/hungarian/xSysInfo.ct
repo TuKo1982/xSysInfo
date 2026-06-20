@@ -576,10 +576,10 @@ Mit is mondhatnék!
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD
-NORMÁL
+ÁTTEK
 ;
 MSG_HARDWARE_EXT
-BÖVÍTETT
+CHIPSET
 ;
 MSG_RAMSEY_CTRL
 Ramsey control

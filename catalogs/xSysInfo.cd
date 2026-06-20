@@ -574,10 +574,10 @@ What can I say!
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD (//)
-NORMAL
+OVERVIEW
 ;
 MSG_HARDWARE_EXT (//)
-EXTENDED
+CHIPSET
 ;
 MSG_RAMSEY_CTRL (//)
 Ramsey control

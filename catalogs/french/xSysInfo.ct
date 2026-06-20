@@ -576,10 +576,10 @@ Que dire!
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD
-NORMAL
+APERÇU
 ;
 MSG_HARDWARE_EXT
-ETENDU
+CHIPSET
 ;
 MSG_RAMSEY_CTRL
 Controle Ramsey

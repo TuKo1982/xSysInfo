@@ -242,8 +242,8 @@ static const char *default_strings[MSG_COUNT] = {
     /* MSG_COMMENT_DEFAULT */        "What can I say!",
 
     /* Hardware toggle */
-    /* MSG_HARDWARE_STD */           "NORMAL",
-    /* MSG_HARDWARE_EXT */           "EXTENDED",
+    /* MSG_HARDWARE_STD */           "OVERVIEW",
+    /* MSG_HARDWARE_EXT */           "CHIPSET",
     /* MSG_RAMSEY_CTRL */            "Ramsey control",
     /* MSG_SDMAC_REV */              "SCSI chip",
     /* MSG_RAMSEY_PAGE */            "Page mode",

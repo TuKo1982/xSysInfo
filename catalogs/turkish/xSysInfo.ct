@@ -576,10 +576,10 @@ Ne diyebilirim ki!
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD
-NORMAL
+GENEL
 ;
 MSG_HARDWARE_EXT
-GENISLETILMIS
+CHIPSET
 ;
 MSG_RAMSEY_CTRL
 Ramsey kontrolu
