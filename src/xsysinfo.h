@@ -143,6 +143,7 @@ typedef struct {
     struct TextFont *tf;            /* Current font */
     BOOL use_custom_screen;         /* TRUE if we opened our own screen */
     BOOL is_pal;                    /* TRUE if PAL system */
+    BOOL dark_mode;                 /* TRUE if DARK palette is requested */
     UWORD screen_height;            /* Actual screen height (200 or 256) */
     DisplayMode display_mode;       /* Requested display mode */
 

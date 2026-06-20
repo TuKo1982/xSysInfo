@@ -63,6 +63,9 @@ static BOOL g_brief_mode = FALSE;
 /* Full mode (no GUI, export full report to CLI output) */
 static BOOL g_full_mode = FALSE;
 
+/* Dark palette mode */
+static BOOL g_dark_mode = FALSE;
+
 /* Global application context */
 AppContext app_context;
 struct TextAttr Topaz8Font = {
@@ -74,18 +77,19 @@ struct TextAttr Topaz8Font = {
 AppContext *app = &app_context;
 
 /* Command line argument template */
-#define TEMPLATE "DEBUG/S,BRIEF/S,FULL/S"
+#define TEMPLATE "DEBUG/S,BRIEF/S,FULL/S,DARK/S"
 
 /* Argument array indices */
 enum {
     ARG_DEBUG,
     ARG_BRIEF,
     ARG_FULL,
+    ARG_DARK,
     ARG_COUNT
 };
 
 /* Color palette matching original SysInfo */
-static const UWORD palette[8] = {
+static const UWORD default_palette[NUM_COLORS] = {
     0x0AAA,     /* 0: Gray screen background */
     0x0666,     /* 1: Dark title-strip background */
     0x0000,     /* 2: Black text */
@@ -94,6 +98,18 @@ static const UWORD palette[8] = {
     0x0F00,     /* 5: Red "You" bar */
     0x0DDD,     /* 6: Light (3D button top) */
     0x0444,     /* 7: Dark (3D button shadow) */
+};
+
+/* Dark palette sampled from the issue reference image */
+static const UWORD dark_palette[NUM_COLORS] = {
+    0x0112,     /* 0: Dark navy background */
+    0x0234,     /* 1: Slate title-strip background */
+    0x0CCC,     /* 2: Soft white text */
+    0x0FFF,     /* 3: White highlight */
+    0x0258,     /* 4: Blue bar fill */
+    0x0E43,     /* 5: Red-orange "You" bar */
+    0x0777,     /* 6: Medium gray (3D button top) */
+    0x0445,     /* 7: Dark slate (3D button shadow) */
 };
 
 /* Default pens array for SA_Pens (use system defaults) */
@@ -112,6 +128,7 @@ static BOOL is_rtg_mode(struct Screen *screen);
 static void parse_tooltypes(void);
 static void run_full_memory_benchmarks(void);
 static void run_full_drive_benchmarks(void);
+static const UWORD *active_palette(void);
 
 /*
  * Case-insensitive string compare (portable, no OS dependency)
@@ -160,6 +177,8 @@ static BOOL parse_args(int argc, char **argv)
                 g_brief_mode = TRUE;
             else if (xstricmp(argv[i], "full") == 0)
                 g_full_mode = TRUE;
+            else if (xstricmp(argv[i], "dark") == 0)
+                g_dark_mode = TRUE;
         }
     }
     return TRUE;
@@ -207,6 +226,11 @@ static void parse_tooltypes(void)
         /* Check for BRIEF tooltype */
         if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"BRIEF")) {
             g_brief_mode = TRUE;
+        }
+
+        /* Check for DARK tooltype */
+        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"DARK")) {
+            app->dark_mode = TRUE;
         }
 
         FreeDiskObject(dobj);
@@ -270,6 +294,7 @@ int main(int argc, char **argv)
     app->bar_scale = SCALE_SHRINK;
     app->running = TRUE;
     app->pressed_button = -1;
+    app->dark_mode = g_dark_mode;
 
     debug(XSYSINFO_NAME ": Initializing locale...\n");
     /* Initialize locale */
@@ -797,8 +822,14 @@ static void close_display(void)
 /*
  * Set color palette for custom screen
  */
+static const UWORD *active_palette(void)
+{
+    return app->dark_mode ? dark_palette : default_palette;
+}
+
 static void set_palette(void)
 {
+    const UWORD *palette = active_palette();
     UWORD i;
 
     if (!app->screen) return;
@@ -849,6 +880,7 @@ static WORD find_closest_pen(struct ColorMap *cm, WORD ncolors,
  */
 static void allocate_pens(void)
 {
+    const UWORD *palette = active_palette();
     UWORD i;
     struct ColorMap *cm;
 

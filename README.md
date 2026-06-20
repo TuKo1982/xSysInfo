@@ -58,6 +58,10 @@ window when your screen resolution is larger than 640x512, as xSysInfo is
 assuming RTG mode. For lower resolutions it will start on a PAL or NTSC screen.
 You can force either behavior with DISPLAY=window or DISPLAY=screen.
 
+Dark mode uses a dark blue palette. Run `xSysInfo DARK` from the shell, or set
+a DARK ToolType on the icon when starting from Workbench. Without DARK,
+xSysInfo keeps the default palette.
+
 ![XSysInfo in windowed mode](docs/xsysinfo-windowed.png)
 
 
@@ -72,4 +76,3 @@ You can force either behavior with DISPLAY=window or DISPLAY=screen.
 ## Contributing
 
 We welcome contributions! Please feel free to fork the repository, make your changes, and submit a pull request.
-

@@ -582,6 +582,11 @@ static BOOL decorative_dots_available(void)
     return app->screen && app->screen->BitMap.Depth >= 3;
 }
 
+static WORD shadow_text_color(void)
+{
+    return app->dark_mode ? COLOR_BACKGROUND : COLOR_TEXT;
+}
+
 static void draw_xsysinfo_logo_mask(struct RastPort *rp, WORD x, WORD y, WORD color)
 {
     WORD row, col, start;
@@ -612,7 +617,7 @@ static void draw_xsysinfo_logo(WORD x, WORD y)
     struct RastPort *rp = app->rp;
 
     SetDrMd(rp, JAM1);
-    draw_xsysinfo_logo_mask(rp, x + 1, y + 1, COLOR_TEXT);
+    draw_xsysinfo_logo_mask(rp, x + 1, y + 1, shadow_text_color());
     draw_xsysinfo_logo_mask(rp, x, y, COLOR_HIGHLIGHT);
 }
 
@@ -671,14 +676,14 @@ static void draw_header(void)
         subtitle_x += (title_area_w - subtitle_width) / 2;
     }
 
-    SetAPen(rp, COLOR_TEXT);
+    SetAPen(rp, shadow_text_color());
     Move(rp, title_x + 1, 10);
     Text(rp, (CONST_STRPTR)title, title_len);
     SetAPen(rp, COLOR_HIGHLIGHT);
     Move(rp, title_x, 9);
     Text(rp, (CONST_STRPTR)title, title_len);
 
-    SetAPen(rp, COLOR_TEXT);
+    SetAPen(rp, shadow_text_color());
     Move(rp, subtitle_x + 1, 20);
     Text(rp, (CONST_STRPTR)subtitle, subtitle_len);
     SetAPen(rp, COLOR_HIGHLIGHT);
@@ -731,7 +736,7 @@ void draw_panel(WORD x, WORD y, WORD w, WORD h, const char *title)
         }
 
         SetDrMd(rp, JAM1);
-        SetAPen(rp, COLOR_TEXT);
+        SetAPen(rp, shadow_text_color());
         Move(rp, x + 5, y + h - 3);
         Text(rp, (CONST_STRPTR)title, title_len);
         SetAPen(rp, COLOR_HIGHLIGHT);
@@ -819,7 +824,7 @@ void draw_cycle_button(Button *btn)
     icon_x = btn->x + 4;
     text_y = btn->y + (btn->height + 6) / 2;
 
-    SetAPen(rp, COLOR_TEXT);
+    SetAPen(rp, shadow_text_color());
     TextLength(rp, (CONST_STRPTR)">", 1);
     Move(rp, icon_x + 1, text_y + 1);
     Text(rp, (CONST_STRPTR)">", 1);
@@ -833,7 +838,7 @@ void draw_cycle_button(Button *btn)
         text_len = strlen(btn->label);
         text_x = btn->x + 14;  /* After icon */
 
-        SetAPen(rp, COLOR_TEXT);
+        SetAPen(rp, shadow_text_color());
         TextLength(rp, (CONST_STRPTR)btn->label, text_len);
         Move(rp, text_x + 1, text_y + 1);
         Text(rp, (CONST_STRPTR)btn->label, text_len);
