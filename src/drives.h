@@ -47,6 +47,7 @@ typedef struct {
     ULONG total_blocks;
     ULONG blocks_used;
     ULONG bytes_per_block;      /* Device/geometry block size */
+    ULONG filesystem_bytes_per_block; /* Logical/filesystem block size */
     ULONG geometry_total_blocks;
     ULONG info_total_blocks;
     ULONG info_blocks_used;
@@ -90,6 +91,11 @@ void refresh_drive_info(ULONG index);
 ULONG measure_drive_speed(ULONG index);
 BOOL check_disk_present(ULONG index);
 ULONG get_display_block_size(const DriveInfo *drive);
+ULONG get_filesystem_block_size(const DriveInfo *drive);
+void format_block_size_display(const DriveInfo *drive, char *buffer,
+                               ULONG size);
+void format_filesystem_display(const DriveInfo *drive, char *buffer,
+                               ULONG size);
 
 /* Helper functions */
 const char *get_disk_state_string(DiskState state);

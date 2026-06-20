@@ -106,7 +106,7 @@ static const char *default_strings[MSG_COUNT] = {
     /* MSG_DISK_STATE */             "DISK STATE",
     /* MSG_TOTAL_BLOCKS */           "TOTAL NUMBER OF BLOCKS",
     /* MSG_BLOCKS_USED */            "TOTAL BLOCKS USED",
-    /* MSG_BYTES_PER_BLOCK */        "BYTES PER BLOCK",
+    /* MSG_BYTES_PER_BLOCK */        "BLOCK SIZE",
     /* MSG_DISK_TYPE */              "DRIVE/DISK TYPE",
     /* MSG_VOLUME_NAME */            "VOLUME NAME",
     /* MSG_DEVICE_NAME */            "DEVICE NAME",

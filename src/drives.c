@@ -77,6 +77,8 @@ extern struct DosLibrary *DOSBase;
 #define ID_PDS2         0x50445302  /* 'PDS\2' */
 #define ID_PDS3         0x50445303  /* 'PDS\3' */
 
+#define OFS_BLOCK_OVERHEAD 24UL
+
 /*
  * Identify filesystem from DOS type
  */
@@ -135,6 +137,61 @@ const char *get_filesystem_string(FilesystemType fs)
     }
 }
 
+static BOOL is_ofs_filesystem(FilesystemType fs)
+{
+    switch (fs) {
+        case FS_OFS:
+        case FS_INTL_OFS:
+        case FS_DCACHE_OFS:
+        case FS_LNFS_OFS:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+static char dos_type_id_char(ULONG dos_type, ULONG shift)
+{
+    UBYTE ch = (UBYTE)(dos_type >> shift);
+
+    if (ch >= 32 && ch <= 126 && ch != '\\') {
+        return (char)ch;
+    }
+    return '?';
+}
+
+static void format_dos_type_string(ULONG dos_type, char *buffer, ULONG size)
+{
+    if (!buffer || size == 0) return;
+
+    snprintf(buffer, size, "%c%c%c\\%lu",
+             dos_type_id_char(dos_type, 24),
+             dos_type_id_char(dos_type, 16),
+             dos_type_id_char(dos_type, 8),
+             (unsigned long)(dos_type & 0xff));
+}
+
+void format_filesystem_display(const DriveInfo *drive, char *buffer,
+                               ULONG size)
+{
+    const char *name;
+    char dos_type[16];
+
+    if (!buffer || size == 0) return;
+    buffer[0] = '\0';
+    if (!drive) return;
+
+    name = drive->fs_type == FS_UNKNOWN ?
+           "Unknown" : get_filesystem_string(drive->fs_type);
+
+    if (drive->has_dos_type) {
+        format_dos_type_string(drive->dos_type, dos_type, sizeof(dos_type));
+        snprintf(buffer, size, "%s (%s)", name, dos_type);
+    } else {
+        snprintf(buffer, size, "%s", name);
+    }
+}
+
 /*
  * Get disk state string
  */
@@ -148,25 +205,66 @@ const char *get_disk_state_string(DiskState state)
     }
 }
 
-/*
- * Get block size to display (adjusts for OFS overhead)
- */
 ULONG get_display_block_size(const DriveInfo *drive)
 {
-    ULONG block_size;
-
     if (!drive) return 0;
 
     if (drive->has_info && drive->info_bytes_per_block) {
         return drive->info_bytes_per_block;
     }
 
-    block_size = drive->bytes_per_block;
-    if (drive->fs_type == FS_OFS && block_size >= 24) {
-        block_size -= 24;
+    return drive->bytes_per_block;
+}
+
+ULONG get_filesystem_block_size(const DriveInfo *drive)
+{
+    ULONG block_size;
+
+    if (!drive) return 0;
+
+    block_size = drive->filesystem_bytes_per_block;
+    if (block_size == 0) {
+        block_size = get_display_block_size(drive);
     }
 
     return block_size;
+}
+
+void format_block_size_display(const DriveInfo *drive, char *buffer,
+                               ULONG size)
+{
+    ULONG block_size;
+    ULONG filesystem_block_size;
+    ULONG payload_block_size = 0;
+
+    if (!buffer || size == 0) return;
+
+    block_size = get_display_block_size(drive);
+    filesystem_block_size = get_filesystem_block_size(drive);
+    if (drive && is_ofs_filesystem(drive->fs_type) &&
+        filesystem_block_size > OFS_BLOCK_OVERHEAD) {
+        payload_block_size = filesystem_block_size - OFS_BLOCK_OVERHEAD;
+    }
+
+    if (payload_block_size != 0 &&
+        filesystem_block_size != 0 && filesystem_block_size != block_size) {
+        snprintf(buffer, size,
+                 "%lu bytes (filesystem %lu bytes, payload %lu bytes)",
+                 (unsigned long)block_size,
+                 (unsigned long)filesystem_block_size,
+                 (unsigned long)payload_block_size);
+    } else if (payload_block_size != 0) {
+        snprintf(buffer, size, "%lu bytes (payload %lu bytes)",
+                 (unsigned long)block_size,
+                 (unsigned long)payload_block_size);
+    } else if (filesystem_block_size != 0 &&
+               filesystem_block_size != block_size) {
+        snprintf(buffer, size, "%lu bytes (filesystem %lu bytes)",
+                 (unsigned long)block_size,
+                 (unsigned long)filesystem_block_size);
+    } else {
+        snprintf(buffer, size, "%lu bytes", (unsigned long)block_size);
+    }
 }
 
 static ULONG get_geometry_total_blocks(const DriveInfo *drive)
@@ -304,6 +402,18 @@ static void scan_dos_list(void)
                     drive->low_cylinder = de->de_LowCyl;
                     drive->high_cylinder = de->de_HighCyl;
                     drive->bytes_per_block = de->de_SizeBlock << 2;
+                    if (drive->bytes_per_block != 0) {
+                        ULONG sectors_per_block = de->de_SectorPerBlock;
+
+                        if (sectors_per_block == 0) {
+                            sectors_per_block = 1;
+                        }
+                        if (sectors_per_block <=
+                            ULONG_MAX / drive->bytes_per_block) {
+                            drive->filesystem_bytes_per_block =
+                                drive->bytes_per_block * sectors_per_block;
+                        }
+                    }
                     drive->num_buffers = de->de_NumBuffers;
 
                     if (de->de_TableSize >= 12) {
@@ -472,6 +582,10 @@ static void query_drive_details(void)
             /* Preserve DosEnvec geometry size for raw device I/O if present. */
             if (drive->bytes_per_block == 0) {
                 drive->bytes_per_block = drive->info_bytes_per_block;
+            }
+            if (drive->filesystem_bytes_per_block == 0) {
+                drive->filesystem_bytes_per_block =
+                    drive->info_bytes_per_block;
             }
             if (!drive->has_dos_type) {
                 drive->dos_type = drive->info_disk_type;
@@ -1310,8 +1424,7 @@ static void draw_drives_data(BOOL full_redraw)
         if (drive->disk_state == DISK_NO_DISK) {
             snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_DASH_PLACEHOLDER));
         } else {
-            ULONG display_block_size = get_display_block_size(drive);
-            snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)display_block_size);
+            format_block_size_display(drive, buffer, sizeof(buffer));
         }
         draw_label_value(120, y, get_string(MSG_BYTES_PER_BLOCK), buffer, 224);
         y += 9;
@@ -1320,8 +1433,9 @@ static void draw_drives_data(BOOL full_redraw)
         if (drive->disk_state == DISK_NO_DISK) {
             draw_label_value(120, y, get_string(MSG_DISK_TYPE), get_string(MSG_DISK_NO_DISK_INSERTED), 224);
         } else {
+            format_filesystem_display(drive, buffer, sizeof(buffer));
             draw_label_value(120, y, get_string(MSG_DISK_TYPE),
-                             get_filesystem_string(drive->fs_type), 224);
+                             buffer, 224);
         }
         y += 9;
 

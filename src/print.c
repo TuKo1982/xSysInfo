@@ -493,7 +493,12 @@ void export_drives(BPTR fh)
 
     for (i = 0; i < drive_list.count; i++) {
         DriveInfo *d = &drive_list.drives[i];
-        ULONG display_block_size = get_display_block_size(d);
+        char block_size_buffer[64];
+        char fs_buffer[64];
+
+        format_block_size_display(d, block_size_buffer,
+                                  sizeof(block_size_buffer));
+        format_filesystem_display(d, fs_buffer, sizeof(fs_buffer));
 
         write_formatted(fh, "Drive: %s", d->device_name);
         write_formatted(fh, "  Volume:      %s",
@@ -502,10 +507,10 @@ void export_drives(BPTR fh)
                         d->handler_name[0] ? d->handler_name : "---");
         write_formatted(fh, "  Unit:        %lu", (unsigned long)d->unit_number);
         write_formatted(fh, "  State:       %s", get_disk_state_string(d->disk_state));
-        write_formatted(fh, "  Filesystem:  %s", get_filesystem_string(d->fs_type));
+        write_formatted(fh, "  Filesystem:  %s", fs_buffer);
         write_formatted(fh, "  Total:       %lu blocks", (unsigned long)d->total_blocks);
         write_formatted(fh, "  Used:        %lu blocks", (unsigned long)d->blocks_used);
-        write_formatted(fh, "  Block size:  %lu bytes", (unsigned long)display_block_size);
+        write_formatted(fh, "  Block size:  %s", block_size_buffer);
 
         if (d->speed_measured) {
             write_formatted(fh, "  Speed:       %lu bytes/sec", (unsigned long)d->speed_bytes_sec);
