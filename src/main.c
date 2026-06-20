@@ -110,6 +110,8 @@ static void allocate_pens(void);
 static void release_pens(void);
 static BOOL is_rtg_mode(struct Screen *screen);
 static void parse_tooltypes(void);
+static void run_full_memory_benchmarks(void);
+static void run_full_drive_benchmarks(void);
 
 /*
  * Case-insensitive string compare (portable, no OS dependency)
@@ -213,6 +215,36 @@ static void parse_tooltypes(void)
     CurrentDir(old_dir);
 }
 
+static void run_full_drive_benchmarks(void)
+{
+    ULONG i;
+
+    for (i = 0; i < drive_list.count; i++) {
+        DriveInfo *drive = &drive_list.drives[i];
+
+        if (!drive->is_valid || !drive->handler_name[0] ||
+            drive->disk_state == DISK_NO_DISK ||
+            drive->disk_state == DISK_UNREADABLE) {
+            continue;
+        }
+
+        debug(XSYSINFO_NAME ": Measuring drive %s speed...\n",
+              (LONG)drive->device_name);
+        measure_drive_speed(i);
+    }
+}
+
+static void run_full_memory_benchmarks(void)
+{
+    ULONG i;
+
+    for (i = 0; i < memory_regions.count; i++) {
+        debug(XSYSINFO_NAME ": Measuring memory region %lu speed...\n",
+              (ULONG)(i + 1));
+        measure_memory_speed(i);
+    }
+}
+
 /*
  * Main entry point
  */
@@ -292,6 +324,12 @@ int main(int argc, char **argv)
 
         debug(XSYSINFO_NAME ": Running benchmarks for full CLI output...\n");
         run_benchmarks();
+
+        debug(XSYSINFO_NAME ": Measuring memory regions for full CLI output...\n");
+        run_full_memory_benchmarks();
+
+        debug(XSYSINFO_NAME ": Measuring drives for full CLI output...\n");
+        run_full_drive_benchmarks();
 
         debug(XSYSINFO_NAME ": Exporting full report to CLI output...\n");
         if (!output || !export_to_handle(output)) {

@@ -32,6 +32,7 @@ typedef struct {
 extern SoftwareList libraries_list;
 extern SoftwareList devices_list;
 extern SoftwareList resources_list;
+extern SoftwareList mmu_list;
 
 /* Function prototypes */
 void enumerate_libraries(void);
