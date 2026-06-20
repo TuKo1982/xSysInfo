@@ -1150,12 +1150,15 @@ void detect_system_chips(void)
              "%s", get_string(MSG_NA));
 
     /* Prefer real hardware: if card.resource exists, PCMCIA is present */
+    debug("    systemchips: Checking card.resource...\n");
     if (OpenResource((CONST_STRPTR)"card.resource") != NULL) {
         hw_info.has_pcmcia = TRUE;
         snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
                  "%s", get_string(MSG_SLOT_PCMCIA));
+        debug("    systemchips: card.resource found, using PCMCIA\n");
         return;
     }
+    debug("    systemchips: card.resource not found\n");
 
     /* Detect Zorro capability based on chipset presence:
      * - Ramsey (memory controller) indicates A3000/A4000 = Zorro III
@@ -1168,6 +1171,7 @@ void detect_system_chips(void)
         hw_info.has_zorro_slots = TRUE;
         snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
                  "%s", get_string(MSG_ZORRO_III));
+        debug("    systemchips: Fat Gary detected, using Zorro III\n");
         return;
     }
 
@@ -1176,6 +1180,7 @@ void detect_system_chips(void)
         hw_info.has_pcmcia = TRUE;
         snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
                 "%s", get_string(MSG_SLOT_PCMCIA));
+        debug("    systemchips: Gayle detected, using PCMCIA\n");
         return;
     }
 
@@ -1187,9 +1192,12 @@ void detect_system_chips(void)
          * (same chipset, real Zorro II slots), accepted as a corner case. */
         snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
                  "%s", get_string(MSG_SLOT_ZORRO));
+        debug("    systemchips: A1000 Gary detected, using Zorro\n");
     } else {
         snprintf(hw_info.card_slot_string, sizeof(hw_info.card_slot_string),
                  "%s", get_string(MSG_ZORRO_II));
+        debug("    systemchips: Gary type %ld, using Zorro II\n",
+              (long)hw_info.gary_type);
     }
     return;
 }
