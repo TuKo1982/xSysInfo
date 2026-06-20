@@ -32,12 +32,21 @@
 
 #define OPENPCI_MANUFACTURER_FIRST 1729
 #define OPENPCI_MANUFACTURER_LAST  1735
-#define OPENPCI_RESOURCE_CONFIG    1
 
-typedef struct {
+/*
+ * Minimal OpenPCI pci_dev prefix used by identify.library when traversing
+ * PCI boards via IdPciExpansionTags(IDTAG_Expansion, ...).
+ */
+struct pci_dev {
+    void *bus;
+    struct pci_dev *next;
+    struct pci_dev *pred;
+    UBYTE devfn;
+    UBYTE kludgefill;
     UWORD vendor;
     UWORD device;
-} PciCandidate;
+    ULONG devclass;
+};
 
 /* Global board list */
 BoardList board_list;
@@ -149,99 +158,94 @@ static BOOL is_openpci_resource(const struct ConfigDev *cd)
            manufacturer <= OPENPCI_MANUFACTURER_LAST;
 }
 
-static BOOL collect_pci_candidate(struct ConfigDev *cd, PciCandidate *candidates,
-                                  ULONG *candidate_count)
-{
-    ULONG serial;
-
-    if (!is_openpci_resource(cd) ||
-        cd->cd_Rom.er_Product != OPENPCI_RESOURCE_CONFIG) {
-        return TRUE;
-    }
-
-    if (*candidate_count >= MAX_BOARDS)
-        return FALSE;
-
-    serial = cd->cd_Rom.er_SerialNumber;
-    candidates[*candidate_count].vendor = (UWORD)(serial >> 16);
-    candidates[*candidate_count].device = (UWORD)serial;
-
-    if (!candidates[*candidate_count].vendor &&
-        !candidates[*candidate_count].device) {
-        return TRUE;
-    }
-
-    (*candidate_count)++;
-    return TRUE;
-}
-
-static BOOL append_pci_board(UWORD vendor, UWORD device)
+static BOOL append_pci_board(struct pci_dev *pci, const char *manufacturer,
+                             const char *product, const char *class_name)
 {
     BoardInfo *board;
-    LONG result;
-    char manufacturer[64];
-    char product[64];
 
     if (board_list.count >= MAX_BOARDS)
         return FALSE;
 
-    manufacturer[0] = '\0';
-    product[0] = '\0';
-
-    result = IdPciExpansionTags(
-        IDTAG_ManufID, (ULONG)vendor,
-        IDTAG_ProdID, (ULONG)device,
-        IDTAG_ManufStr, (ULONG)manufacturer,
-        IDTAG_ProdStr, (ULONG)product,
-        IDTAG_StrLength, sizeof(product),
-        TAG_DONE);
-
-    if (result != IDERR_OKAY) {
-        debug("  boards: PCI ID lookup %04lx:%04lx failed (%ld)\n",
-              (unsigned long)vendor, (unsigned long)device, (long)result);
-    }
+    if (!pci)
+        return TRUE;
 
     board = &board_list.boards[board_list.count];
     board->board_type = BOARD_PCI;
-    board->manufacturer_id = vendor;
-    board->product_id = device;
+    board->manufacturer_id = pci->vendor;
+    board->product_id = pci->device;
     board->serial_number = 0;
     board->board_address = 0;
     board->board_size = 0;
 
     snprintf(board->address_string, sizeof(board->address_string), "--");
     snprintf(board->size_string, sizeof(board->size_string), "--");
-    snprintf(board->detail_string, sizeof(board->detail_string), "PCI");
+    if (class_name && class_name[0]) {
+        snprintf(board->detail_string, sizeof(board->detail_string), "%s",
+                 class_name);
+    } else {
+        snprintf(board->detail_string, sizeof(board->detail_string), "PCI");
+    }
 
-    if (manufacturer[0]) {
+    if (manufacturer && manufacturer[0]) {
         snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
                  "%s", manufacturer);
     } else {
         snprintf(board->manufacturer_name, sizeof(board->manufacturer_name),
-                 "$%04lx", (unsigned long)vendor);
+                 "$%04lx", (unsigned long)pci->vendor);
     }
 
-    if (product[0]) {
+    if (product && product[0]) {
         snprintf(board->product_name, sizeof(board->product_name), "%s",
                  product);
     } else {
         snprintf(board->product_name, sizeof(board->product_name),
-                 "$%04lx", (unsigned long)device);
+                 "$%04lx", (unsigned long)pci->device);
     }
 
-    debug("  boards: Found PCI board %04lx:%04lx from virtual ConfigDev\n",
-          (unsigned long)vendor, (unsigned long)device);
+    debug("  boards: Found PCI board %04lx:%04lx\n",
+          (unsigned long)pci->vendor, (unsigned long)pci->device);
 
     board_list.count++;
     return TRUE;
 }
 
+static void enumerate_pci_boards_with_identify(void)
+{
+    struct pci_dev *pci = NULL;
+    LONG result;
+    char manufacturer[64];
+    char product[64];
+    char class_name[64];
+
+    debug("  boards: Scanning PCI boards via identify.library...\n");
+
+    while (board_list.count < MAX_BOARDS) {
+        manufacturer[0] = '\0';
+        product[0] = '\0';
+        class_name[0] = '\0';
+
+        result = IdPciExpansionTags(
+            IDTAG_Expansion, (ULONG)&pci,
+            IDTAG_ManufStr, (ULONG)manufacturer,
+            IDTAG_ProdStr, (ULONG)product,
+            IDTAG_ClassStr, (ULONG)class_name,
+            IDTAG_StrLength, sizeof(product),
+            TAG_DONE);
+
+        if (result != IDERR_OKAY) {
+            debug("  boards: PCI scan stopped with result %ld\n",
+                  (long)result);
+            break;
+        }
+
+        if (!append_pci_board(pci, manufacturer, product, class_name))
+            break;
+    }
+}
+
 static void enumerate_zorro_boards_with_identify(void)
 {
     struct ConfigDev *cd = NULL;
-    PciCandidate pci_candidates[MAX_BOARDS];
-    ULONG pci_count = 0;
-    ULONG i;
     LONG result;
     ULONG class_id;
     UBYTE unknown;
@@ -272,21 +276,24 @@ static void enumerate_zorro_boards_with_identify(void)
             break;
 
         if (class_id == IDCID_VIRTUAL) {
-            debug("  boards: Skipping virtual expansion board\n");
-            if (!collect_pci_candidate(cd, pci_candidates, &pci_count))
-                break;
+            if (is_openpci_resource(cd)) {
+                debug("  boards: Skipping OpenPCI virtual expansion "
+                      "%u/%u\n",
+                      cd->cd_Rom.er_Manufacturer,
+                      cd->cd_Rom.er_Product);
+            } else {
+                debug("  boards: Skipping virtual expansion board "
+                      "%u/%u\n",
+                      cd->cd_Rom.er_Manufacturer,
+                      cd->cd_Rom.er_Product);
+            }
             continue;
         }
 
         append_zorro_board(cd, manufacturer, product);
     }
 
-    for (i = 0; i < pci_count; i++) {
-        if (!append_pci_board(pci_candidates[i].vendor,
-                              pci_candidates[i].device)) {
-            break;
-        }
-    }
+    enumerate_pci_boards_with_identify();
 }
 
 static void enumerate_zorro_boards_raw(void)
