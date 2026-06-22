@@ -20,7 +20,7 @@ NDK_PATH ?= $(shell realpath $$(dirname $$(which $(CC)))/../m68k-amigaos/ndk-inc
 IDENTIFY_INC = 3rdparty/identify/reference
 MMU_INC = 3rdparty/mmu/reference
 
-CFLAGS = -O2 -m68000 -mtune=68020-60 -Wa,-m68881 -msoft-float -noixemul -Wall -Wextra \
+CFLAGS = -Os -m68000 -mtune=68020-60 -Wa,-m68881 -msoft-float -noixemul -Wall -Wextra \
          -I$(IDENTIFY_INC) \
          -I$(MMU_INC) \
          -DXSYSINFO_DATE="\"$(ADATE)\"" -DXSYSINFO_VERSION="\"$(FULL_VERSION)\"" \
@@ -59,6 +59,8 @@ STACK_OBJ = src/Stack.o
 STACK_CFLAGS = $(filter-out -flto%,$(CFLAGS)) -fno-lto
 
 OBJS = $(SRCS:.c=.o)
+
+BENCH_OBJS = src/benchmark.o src/dhry_1.o src/dhry_2.o
 
 ASM_OBJS = $(ASM_SRCS:.S=.o)
 
@@ -162,6 +164,8 @@ $(STACK_OBJ): $(STACK_SRC)
 $(OBJS): src/%.o: src/%.c src/xsysinfo.h
 	@echo "  CC    $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BENCH_OBJS): CFLAGS += -O2
 
 $(ASM_OBJS): src/%.o: src/%.S
 	@echo "  ASM   $@"
