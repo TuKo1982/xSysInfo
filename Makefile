@@ -53,6 +53,10 @@ ASM_SRCS = src/cpu.S src/berr_trap.S
 TINYSETPATCH_DIR = 3rdparty/TinySetPatch
 TINYSETPATCH_SRC = $(TINYSETPATCH_DIR)/TinySetPatch.S
 TINYSETPATCH_BIN = $(TINYSETPATCH_DIR)/TinySetPatch
+STACK = Stack
+STACK_SRC = src/Stack.c
+STACK_OBJ = src/Stack.o
+STACK_CFLAGS = $(filter-out -flto%,$(CFLAGS)) -fno-lto
 
 OBJS = $(SRCS:.c=.o)
 
@@ -144,6 +148,17 @@ $(TARGET): $(OBJS) $(ASM_OBJS)
 	@$(STRIP) $@
 	@wc -c < "$@" | awk '{printf "$@ successfully compiled (%s bytes)\n", $$1}'
 
+$(STACK): $(STACK_OBJ)
+	@echo "  LINK  $@"
+	@$(CC) -nostartfiles -nostdlib -o $@ $(STACK_OBJ)
+	@echo "  STRIP $@"
+	@$(STRIP) $@
+	@wc -c < "$@" | awk '{printf "$@ successfully compiled (%s bytes)\n", $$1}'
+
+$(STACK_OBJ): $(STACK_SRC)
+	@echo "  CC    $@"
+	@$(CC) $(STACK_CFLAGS) -c -o $@ $<
+
 $(OBJS): src/%.o: src/%.c src/xsysinfo.h
 	@echo "  CC    $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
@@ -154,7 +169,7 @@ $(ASM_OBJS): src/%.o: src/%.S
 
 clean:
 	@echo "  CLEAN"
-	@rm -f $(OBJS) $(ASM_OBJS) $(TARGET) TinySetPatch
+	@rm -f $(OBJS) $(ASM_OBJS) $(STACK_OBJ) $(TARGET) TinySetPatch $(STACK)
 	@rm -rf $(CATALOG_DIR)
 	@rm -f xsysinfo-*.lha
 	@$(MAKE) -s -C 3rdparty/flexcat clean
@@ -354,7 +369,7 @@ TinySetPatch: $(TINYSETPATCH_SRC) $(TINYSETPATCH_DIR)/Makefile Makefile
 	@$(MAKE) -s -C $(TINYSETPATCH_DIR) TinySetPatch VASM=$(VASM) NDK_PATH="$(NDK_PATH)"
 	@cp $(TINYSETPATCH_BIN) $@
 
-disk: $(TARGET) download-libs TinySetPatch
+disk: $(TARGET) download-libs TinySetPatch $(STACK)
 	@echo "  DISK"
 	@xdftool $(DISK) format "xSysInfo"
 	@xdftool $(DISK) write $(TARGET) $(TARGET)
@@ -370,6 +385,7 @@ disk: $(TARGET) download-libs TinySetPatch
 	@xdftool $(DISK) write Startup-Sequence S/Startup-Sequence
 	@xdftool $(DISK) write 3rdparty/identify/build/pci.db S/pci.db
 	@xdftool $(DISK) makedir C
+	@xdftool $(DISK) write $(STACK) C/Stack
 	@xdftool $(DISK) write TinySetPatch C/TinySetPatch
 	@xdftool $(DISK) boot install
 	@xdftool $(DISK) info
