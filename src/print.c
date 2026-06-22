@@ -100,6 +100,18 @@ static void format_speed_display(ULONG speed, char *buffer, ULONG size)
     }
 }
 
+static void format_mmu_address(char *buffer, ULONG size, ULONG address)
+{
+    APTR phys = mmu_physical_address((APTR)address);
+
+    if (phys != (APTR)address) {
+        snprintf(buffer, size, "$%08lX ->%s", (unsigned long)address,
+                 get_location_string(determine_mem_location(phys)));
+    } else {
+        snprintf(buffer, size, "$%08lX", (unsigned long)address);
+    }
+}
+
 static void format_paula_string(char *buffer, ULONG size)
 {
     switch (hw_info.paula_type) {
@@ -350,29 +362,17 @@ void export_hardware(BPTR fh)
     }
     write_formatted(fh, "%-16s %s", "MMU:", buffer);
 
-    {
-        APTR phys = mmu_physical_address((APTR)hw_info.vbr);
-        if (phys != (APTR)hw_info.vbr)
-            snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
-                     (unsigned long)hw_info.vbr,
-                     get_location_string(determine_mem_location(phys)));
-        else
-            snprintf(buffer, sizeof(buffer), "$%08lX",
-                     (unsigned long)hw_info.vbr);
-    }
+    format_mmu_address(buffer, sizeof(buffer), hw_info.vbr);
     write_formatted(fh, "%-16s %s", "VBR:", buffer);
 
-    {
-        APTR phys = mmu_physical_address((APTR)hw_info.ssp);
-        if (phys != (APTR)hw_info.ssp)
-            snprintf(buffer, sizeof(buffer), "$%08lX ->%s",
-                     (unsigned long)hw_info.ssp,
-                     get_location_string(determine_mem_location(phys)));
-        else
-            snprintf(buffer, sizeof(buffer), "$%08lX",
-                     (unsigned long)hw_info.ssp);
-    }
+    format_mmu_address(buffer, sizeof(buffer), hw_info.ssp);
     write_formatted(fh, "%-16s %s", "SSP:", buffer);
+
+    format_mmu_address(buffer, sizeof(buffer), (ULONG)SysBase);
+    write_formatted(fh, "%-16s %s", "ExecBase:", buffer);
+
+    format_mmu_address(buffer, sizeof(buffer), 0);
+    write_formatted(fh, "%-16s %s", "Page 0:", buffer);
 
     write_formatted(fh, "%-16s %s", "Comment:", hw_info.comment);
 

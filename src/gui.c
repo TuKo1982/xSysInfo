@@ -56,7 +56,7 @@ static char dburst_label[16], cback_label[16], super_scalar_label[16];
 #define CACHE_BTN_X (HARDWARE_PANEL_X + 226)
 #define CACHE_BTN_W 32
 #define CACHE_BTN_H 11
-#define CACHE_ROW_Y0 (HARDWARE_PANEL_Y + 60)
+#define CACHE_ROW_Y0 (HARDWARE_PANEL_Y + 84)
 #define CACHE_LABEL_Y0 (CACHE_ROW_Y0 + 8)
 #define CACHE_ROW_STEP 11
 #define HARDWARE_OVERVIEW_VALUE_OFFSET 90
@@ -1935,6 +1935,16 @@ static void draw_hardware_panel(void)
         format_mmu_address(buffer, sizeof(buffer), hw_info.ssp);
         draw_label_value(HARDWARE_PANEL_X + 4, y,
                          get_string(MSG_SSP), buffer, 80);
+        y += 8;
+
+        format_mmu_address(buffer, sizeof(buffer), (ULONG)SysBase);
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         "ExecBase", buffer, 80);
+        y += 8;
+
+        format_mmu_address(buffer, sizeof(buffer), 0);
+        draw_label_value(HARDWARE_PANEL_X + 4, y,
+                         "Page 0", buffer, 80);
         y += 16;
 
         cache_y = CACHE_LABEL_Y0;
