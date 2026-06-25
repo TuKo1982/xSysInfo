@@ -20,16 +20,17 @@ NDK_PATH ?= $(shell realpath $$(dirname $$(which $(CC)))/../m68k-amigaos/ndk-inc
 IDENTIFY_INC = 3rdparty/identify/reference
 MMU_INC = 3rdparty/mmu/reference
 
+#LTO ?= -flto=auto
 CFLAGS = -Os -m68000 -mtune=68020-60 -Wa,-m68881 -msoft-float -noixemul -Wall -Wextra \
          -I$(IDENTIFY_INC) \
          -I$(MMU_INC) \
          -DXSYSINFO_DATE="\"$(ADATE)\"" -DXSYSINFO_VERSION="\"$(FULL_VERSION)\"" \
-         -DPROG_VERSION=$(PROG_VERSION) -DPROG_REVISION=$(PROG_REVISION)
+         -DPROG_VERSION=$(PROG_VERSION) -DPROG_REVISION=$(PROG_REVISION) $(LTO)
 
 ASMFLAGS = -Fhunk -esc -sc -m68020up -I $(NDK_PATH)
 # Select the Kick 1.3-safe libnix runtime.  This keeps the no-ixemul build
 # while avoiding libnix20 helpers that auto-open utility.library.
-LDFLAGS = -mcrt=nix13
+LDFLAGS = -mcrt=nix13 $(LTO)
 LIBS = -lamiga -lgcc
 
 # Source files
