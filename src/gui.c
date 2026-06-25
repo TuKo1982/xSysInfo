@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include <graphics/gfxmacros.h>
 #include <graphics/rastport.h>
 #include <graphics/text.h>
 #include <devices/inputevent.h>
@@ -582,6 +583,21 @@ static BOOL decorative_dots_available(void)
     return app->screen && app->screen->BitMap.Depth >= 3;
 }
 
+static void draw_dotted_row(WORD x, WORD y, WORD max_x, UWORD pattern)
+{
+    struct RastPort *rp = app->rp;
+
+    if (max_x <= x)
+        return;
+
+    SetAPen(rp, COLOR_BACKGROUND);
+    SetDrMd(rp, JAM1);
+    SetDrPt(rp, pattern);
+    Move(rp, x, y);
+    Draw(rp, max_x - 1, y);
+    SetDrPt(rp, 0xffff);
+}
+
 static WORD shadow_text_color(void)
 {
     return app->dark_mode ? COLOR_BACKGROUND : COLOR_TEXT;
@@ -645,11 +661,9 @@ static void draw_header(void)
     SetAPen(rp, COLOR_BAR_FILL);
     RectFill(rp, 1, 1, SCREEN_WIDTH - 2, HEADER_HEIGHT - 2);
     if (decorative_dots_available()) {
-        SetAPen(rp, COLOR_BACKGROUND);
         for (y = 3; y < HEADER_HEIGHT - 2; y += 4) {
-            for (x = 3 + ((y & 4) ? 2 : 0); x < SCREEN_WIDTH - 2; x += 4) {
-                WritePixel(rp, x, y);
-            }
+            x = 3 + ((y & 4) ? 2 : 0);
+            draw_dotted_row(x, y, SCREEN_WIDTH - 2, 0x8888);
         }
     }
 
@@ -727,11 +741,9 @@ void draw_panel(WORD x, WORD y, WORD w, WORD h, const char *title)
 
         if (decorative_dots_available()) {
             dot_start = x + 4 + title_len * 8 + 8;
-            SetAPen(rp, COLOR_BACKGROUND);
             for (py = y + 3; py <= y + h - 3; py += 4) {
-                for (px = dot_start + ((py & 4) ? 4 : 0); px < x + w - 3; px += 8) {
-                    WritePixel(rp, px, py);
-                }
+                px = dot_start + ((py & 4) ? 4 : 0);
+                draw_dotted_row(px, py, x + w - 3, 0x8080);
             }
         }
 
