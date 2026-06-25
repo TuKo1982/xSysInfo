@@ -11,6 +11,7 @@
 #include <exec/execbase.h>
 #include <exec/memory.h>
 #include <intuition/intuition.h>
+#include <intuition/intuitionbase.h>
 #include <intuition/screens.h>
 #include <graphics/gfxbase.h>
 #include <graphics/displayinfo.h>
@@ -115,6 +116,16 @@ static const UWORD dark_palette[NUM_COLORS] = {
 /* Default pens array for SA_Pens (use system defaults) */
 static const UWORD default_pens[] = { (UWORD)~0 };
 
+#define ICON_STR(s) ((STRPTR)(APTR)(s))
+
+#if defined(INCLUDE_VERSION) && INCLUDE_VERSION < 47
+typedef STRPTR IconString;
+#define ICON_TOOLTYPES(t) ((CONST STRPTR *)(t))
+#else
+typedef CONST_STRPTR IconString;
+#define ICON_TOOLTYPES(t) ((CONST_STRPTR *)(t))
+#endif
+
 /* Forward declarations */
 static BOOL open_libraries(void);
 static void close_libraries(void);
@@ -129,6 +140,16 @@ static void parse_tooltypes(void);
 static void run_full_memory_benchmarks(void);
 static void run_full_drive_benchmarks(void);
 static const UWORD *active_palette(void);
+
+static UBYTE *find_icon_tooltype(STRPTR *tooltypes, IconString name)
+{
+    return FindToolType(ICON_TOOLTYPES(tooltypes), name);
+}
+
+static BOOL match_icon_toolvalue(IconString value, IconString match)
+{
+    return MatchToolValue(value, match);
+}
 
 /*
  * Case-insensitive string compare (portable, no OS dependency)
@@ -190,8 +211,8 @@ static BOOL parse_args(int argc, char **argv)
 static void parse_tooltypes(void)
 {
     struct DiskObject *dobj;
-    char **tooltypes;
-    char *value;
+    STRPTR *tooltypes;
+    UBYTE *value;
     BPTR old_dir;
 
     if (!wb_startup || !IconBase) {
@@ -202,34 +223,34 @@ static void parse_tooltypes(void)
     old_dir = CurrentDir(wb_startup->sm_ArgList[0].wa_Lock);
 
     /* Get the program's icon */
-    dobj = GetDiskObject(wb_startup->sm_ArgList[0].wa_Name);
+    dobj = GetDiskObject(ICON_STR(wb_startup->sm_ArgList[0].wa_Name));
     if (dobj) {
-        tooltypes = (char **)dobj->do_ToolTypes;
+        tooltypes = dobj->do_ToolTypes;
 
         /* Check for DISPLAY tooltype */
-        value = (char *)FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"DISPLAY");
+        value = find_icon_tooltype(tooltypes, ICON_STR("DISPLAY"));
         if (value) {
-            if (MatchToolValue((CONST_STRPTR)value, (CONST_STRPTR)"WINDOW")) {
+            if (match_icon_toolvalue(value, ICON_STR("WINDOW"))) {
                 app->display_mode = DISPLAY_WINDOW;
-            } else if (MatchToolValue((CONST_STRPTR)value, (CONST_STRPTR)"SCREEN")) {
+            } else if (match_icon_toolvalue(value, ICON_STR("SCREEN"))) {
                 app->display_mode = DISPLAY_SCREEN;
-            } else if (MatchToolValue((CONST_STRPTR)value, (CONST_STRPTR)"AUTO")) {
+            } else if (match_icon_toolvalue(value, ICON_STR("AUTO"))) {
                 app->display_mode = DISPLAY_AUTO;
             }
         }
 
         /* Check for DEBUG tooltype */
-        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"DEBUG")) {
+        if (find_icon_tooltype(tooltypes, ICON_STR("DEBUG"))) {
             g_debug_enabled = TRUE;
         }
 
         /* Check for BRIEF tooltype */
-        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"BRIEF")) {
+        if (find_icon_tooltype(tooltypes, ICON_STR("BRIEF"))) {
             g_brief_mode = TRUE;
         }
 
         /* Check for DARK tooltype */
-        if (FindToolType((CONST_STRPTR *)tooltypes, (CONST_STRPTR)"DARK")) {
+        if (find_icon_tooltype(tooltypes, ICON_STR("DARK"))) {
             app->dark_mode = TRUE;
         }
 

@@ -20,6 +20,9 @@
 #ifndef NSCMD_TD_READ64
 #define NSCMD_TD_READ64 0xC000
 #endif
+#ifndef TD_READ64
+#define TD_READ64 (CMD_NONSTD + 15)
+#endif
 
 #include <proto/exec.h>
 #include <proto/dos.h>
