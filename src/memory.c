@@ -26,6 +26,11 @@
 /* Global memory region list */
 MemoryRegionList memory_regions;
 
+#define MEMORY_INFO_X        128
+#define MEMORY_VALUE_OFFSET  168
+#define MEMORY_VALUE_X       (MEMORY_INFO_X + MEMORY_VALUE_OFFSET)
+#define MEMORY_VALUE_MAX_X   618
+
 /* External references */
 extern struct ExecBase *SysBase;
 extern HardwareInfo hw_info;
@@ -300,6 +305,142 @@ ULONG measure_memory_speed(ULONG index)
 /*
  * Draw memory view
  */
+static void format_memory_speed(const MemoryRegion *region, char *buffer,
+                                size_t size)
+{
+    if (region->speed_measured) {
+        ULONG speed = region->speed_bytes_sec;
+        if (speed >= 1000000) {
+            snprintf(buffer, size, "%lu.%lu MB/s",
+                     (unsigned long)(speed / 1000000),
+                     (unsigned long)((speed % 1000000) / 100000));
+        } else if (speed >= 10000) {
+            snprintf(buffer, size, "%lu.%lu KB/s",
+                     (unsigned long)(speed / 1000),
+                     (unsigned long)((speed % 1000) / 100));
+        } else if (speed > 0) {
+            snprintf(buffer, size, "%lu B/s", (unsigned long)speed);
+        } else {
+            snprintf(buffer, size, "---");
+        }
+    } else {
+        snprintf(buffer, size, "---");
+    }
+}
+
+static void draw_memory_value(WORD y, const char *value);
+
+static void draw_memory_speed_row(void)
+{
+    char buffer[64];
+    MemoryRegion *region;
+
+    if (app->memory_region_index < 0 ||
+        app->memory_region_index >= (LONG)memory_regions.count) {
+        return;
+    }
+
+    region = &memory_regions.regions[app->memory_region_index];
+    format_memory_speed(region, buffer, sizeof(buffer));
+
+    draw_memory_value(164, buffer);
+}
+
+static void draw_memory_value(WORD y, const char *value)
+{
+    struct RastPort *rp = app->rp;
+
+    SetAPen(rp, COLOR_PANEL_BG);
+    RectFill(rp, MEMORY_VALUE_X, y - 8, MEMORY_VALUE_MAX_X, y + 2);
+    SetAPen(rp, COLOR_HIGHLIGHT);
+    SetBPen(rp, COLOR_PANEL_BG);
+    draw_text_clipped(MEMORY_VALUE_X, y, value,
+                      MEMORY_VALUE_MAX_X - MEMORY_VALUE_X);
+}
+
+static void draw_memory_values(void)
+{
+    char buffer[64];
+    WORD y = 44;
+    MemoryRegion *region;
+
+    refresh_memory_region(app->memory_region_index);
+    region = &memory_regions.regions[app->memory_region_index];
+
+    snprintf(buffer, sizeof(buffer), "$%08lX",
+             (unsigned long)region->start_address);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "$%08lX",
+             (unsigned long)region->end_address);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    format_size(region->total_size, buffer, sizeof(buffer));
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    draw_memory_value(y, region->type_string);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "%d", region->priority);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "$%08lX",
+             (unsigned long)region->lower_bound);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "$%08lX",
+             (unsigned long)region->upper_bound);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "$%08lX",
+             (unsigned long)region->first_free);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "%lu Bytes",
+             (unsigned long)region->amount_free);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "%lu Bytes",
+             (unsigned long)region->largest_block);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)region->num_chunks);
+    draw_memory_value(y, buffer);
+    y += 10;
+
+    draw_memory_value(y, region->node_name);
+    y += 10;
+
+    format_memory_speed(region, buffer, sizeof(buffer));
+    draw_memory_value(y, buffer);
+}
+
+static void draw_memory_buttons(void)
+{
+    Button *btn;
+
+    btn = find_button(BTN_MEM_PREV);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_MEM_COUNTER);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_MEM_NEXT);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_MEM_SPEED);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_MEM_EXIT);
+    if (btn) draw_button(btn);
+}
+
 /*
  * Draw memory data area (info panel and navigation buttons - no title)
  */
@@ -309,7 +450,6 @@ static void draw_memory_data(BOOL full_redraw)
     char buffer[64];
     WORD y;
     MemoryRegion *region;
-    Button *btn;
 
     if (memory_regions.count == 0) {
         SetAPen(rp, COLOR_TEXT);
@@ -323,9 +463,9 @@ static void draw_memory_data(BOOL full_redraw)
         /* Draw memory info panel with 3D border */
         draw_panel(100, 28, 520, 150, NULL);
     } else {
-        /* Clear panel interior only (preserve 3D border) */
-        SetAPen(rp, COLOR_PANEL_BG);
-        RectFill(rp, 101, 29, 618, 176);
+        draw_memory_values();
+        draw_memory_buttons();
+        return;
     }
 
     /* Refresh current region data */
@@ -395,41 +535,11 @@ static void draw_memory_data(BOOL full_redraw)
                          region->node_name, 168, 618);
     y += 10;
 
-    /* Memory speed - display in appropriate units */
-    if (region->speed_measured) {
-        ULONG speed = region->speed_bytes_sec;
-        if (speed >= 1000000) {
-            /* MB/s for fast memory */
-            snprintf(buffer, sizeof(buffer), "%lu.%lu MB/s",
-                     (unsigned long)(speed / 1000000),
-                     (unsigned long)((speed % 1000000) / 100000));
-        } else if (speed >= 10000) {
-            /* KB/s */
-            snprintf(buffer, sizeof(buffer), "%lu.%lu KB/s",
-                     (unsigned long)(speed / 1000),
-                     (unsigned long)((speed % 1000) / 100));
-        } else if (speed > 0) {
-            /* Bytes/s for very slow memory */
-            snprintf(buffer, sizeof(buffer), "%lu B/s", (unsigned long)speed);
-        } else {
-            strncpy(buffer, "---", sizeof(buffer));
-        }
-    } else {
-        strncpy(buffer, "---", sizeof(buffer));
-    }
+    format_memory_speed(region, buffer, sizeof(buffer));
     draw_label_value(128, y, get_string(MSG_MEMORY_SPEED), buffer, 168);
 
     /* Draw navigation buttons */
-    btn = find_button(BTN_MEM_PREV);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_MEM_COUNTER);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_MEM_NEXT);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_MEM_SPEED);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_MEM_EXIT);
-    if (btn) draw_button(btn);
+    draw_memory_buttons();
 }
 
 void draw_memory_view(void)
@@ -497,6 +607,7 @@ void memory_view_handle_button(ButtonID id)
                 measure_memory_speed(app->memory_region_index);
                 Permit();
                 hide_status_overlay();
+                draw_memory_speed_row();
             }
             break;
 

@@ -52,6 +52,11 @@ DriveList drive_list;
 #define DRIVE_SPEED_MAX_US      2000000UL
 #define DRIVE_SPEED_MAX_BYTES   (32UL * 1024UL * 1024UL)
 
+#define DRIVE_INFO_X        120
+#define DRIVE_VALUE_OFFSET  224
+#define DRIVE_VALUE_X       (DRIVE_INFO_X + DRIVE_VALUE_OFFSET)
+#define DRIVE_VALUE_MAX_X   618
+
 static ULONG drive_page = 0;
 
 /* External references */
@@ -1377,32 +1382,221 @@ cleanup:
 /*
  * Draw drives data area (buttons, info panel, action buttons - no title)
  */
+static void format_drive_speed(const DriveInfo *drive, char *buffer,
+                               size_t size)
+{
+    if (drive->speed_measured) {
+        ULONG speed = drive->speed_bytes_sec;
+        if (speed >= 1000000) {
+            snprintf(buffer, size, "%lu.%lu MB/s",
+                     (unsigned long)(speed / 1000000),
+                     (unsigned long)((speed % 1000000) / 100000));
+        } else if (speed >= 10000) {
+            snprintf(buffer, size, "%lu KB/s",
+                     (unsigned long)(speed / 1000));
+        } else {
+            snprintf(buffer, size, "%lu B/s", (unsigned long)speed);
+        }
+    } else {
+        snprintf(buffer, size, "%s", get_string(MSG_DASH_PLACEHOLDER));
+    }
+}
+
+static void draw_drive_value(WORD y, const char *value);
+
+static void draw_drive_speed_row(void)
+{
+    DriveInfo *drive;
+    char buffer[64];
+
+    if (app->selected_drive < 0 ||
+        app->selected_drive >= (LONG)drive_list.count) {
+        return;
+    }
+
+    drive = &drive_list.drives[app->selected_drive];
+    format_drive_speed(drive, buffer, sizeof(buffer));
+
+    draw_drive_value(175, buffer);
+}
+
+static void draw_drive_value(WORD y, const char *value)
+{
+    struct RastPort *rp = app->rp;
+
+    SetAPen(rp, COLOR_PANEL_BG);
+    RectFill(rp, DRIVE_VALUE_X, y - 8, DRIVE_VALUE_MAX_X, y + 2);
+    SetAPen(rp, COLOR_HIGHLIGHT);
+    SetBPen(rp, COLOR_PANEL_BG);
+    draw_text_clipped(DRIVE_VALUE_X, y, value,
+                      DRIVE_VALUE_MAX_X - DRIVE_VALUE_X);
+}
+
+static void draw_drive_values(void)
+{
+    DriveInfo *drive;
+    char buffer[64];
+    const char *value;
+    WORD y = 40;
+
+    if (app->selected_drive < 0 ||
+        app->selected_drive >= (LONG)drive_list.count) {
+        return;
+    }
+
+    drive = &drive_list.drives[app->selected_drive];
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->disk_errors);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->unit_number);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    if (drive->disk_state == DISK_NO_DISK) {
+        value = get_string(MSG_DASH_PLACEHOLDER);
+    } else {
+        value = get_disk_state_string(drive->disk_state);
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->total_blocks);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    if (drive->disk_state == DISK_NO_DISK) {
+        value = get_string(MSG_DASH_PLACEHOLDER);
+    } else {
+        snprintf(buffer, sizeof(buffer), "%lu",
+                 (unsigned long)drive->blocks_used);
+        value = buffer;
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    if (drive->disk_state == DISK_NO_DISK) {
+        value = get_string(MSG_DASH_PLACEHOLDER);
+    } else {
+        format_block_size_display(drive, buffer, sizeof(buffer));
+        value = buffer;
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    if (drive->disk_state == DISK_NO_DISK) {
+        value = get_string(MSG_DISK_NO_DISK_INSERTED);
+    } else {
+        format_filesystem_display(drive, buffer, sizeof(buffer));
+        value = buffer;
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    if (drive->disk_state == DISK_NO_DISK || !drive->volume_name[0]) {
+        value = get_string(MSG_DASH_PLACEHOLDER);
+    } else {
+        value = drive->volume_name;
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    if (drive->handler_name[0]) {
+        value = drive->handler_name;
+    } else {
+        value = get_string(MSG_DASH_PLACEHOLDER);
+    }
+    draw_drive_value(y, value);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->surfaces);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->sectors_per_track);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->reserved_blocks);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->low_cylinder);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->high_cylinder);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    snprintf(buffer, sizeof(buffer), "%lu",
+             (unsigned long)drive->num_buffers);
+    draw_drive_value(y, buffer);
+    y += 9;
+
+    format_drive_speed(drive, buffer, sizeof(buffer));
+    draw_drive_value(y, buffer);
+}
+
+static void draw_drive_select_buttons(void)
+{
+    int i;
+
+    for (i = 0; i < num_buttons; i++) {
+        if (buttons[i].id >= BTN_DRV_DRIVE_BASE &&
+            buttons[i].id < BTN_DRV_DRIVE_BASE + MAX_DRIVES) {
+            buttons[i].pressed = (app->selected_drive ==
+                                  (LONG)(buttons[i].id -
+                                         BTN_DRV_DRIVE_BASE));
+            draw_button(&buttons[i]);
+        }
+    }
+}
+
+static void draw_drive_action_buttons(void)
+{
+    Button *btn;
+
+    btn = find_button(BTN_DRV_EXIT);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_DRV_SCSI);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_DRV_SPEED);
+    if (btn) draw_button(btn);
+
+    /* Draw pager buttons (only added when the list spans pages) */
+    btn = find_button(BTN_DRV_PAGE_PREV);
+    if (btn) draw_button(btn);
+    btn = find_button(BTN_DRV_PAGE_NEXT);
+    if (btn) draw_button(btn);
+}
+
 static void draw_drives_data(BOOL full_redraw)
 {
     struct RastPort *rp = app->rp;
     WORD y;
     DriveInfo *drive;
     char buffer[64];
-    Button *btn;
-    int i;
 
     /* Draw drive selection buttons on left */
-    for (i = 0; i < num_buttons; i++) {
-        if (buttons[i].id >= BTN_DRV_DRIVE_BASE &&
-            buttons[i].id < BTN_DRV_DRIVE_BASE + MAX_DRIVES) {
-            buttons[i].pressed = (app->selected_drive ==
-                                  (LONG)(buttons[i].id - BTN_DRV_DRIVE_BASE));
-            draw_button(&buttons[i]);
-        }
-    }
+    draw_drive_select_buttons();
 
     if (full_redraw) {
         /* Draw drive info panel with 3D border */
         draw_panel(100, 28, 520, 152, NULL);
     } else {
-        /* Clear panel interior only (preserve 3D border) */
-        SetAPen(rp, COLOR_PANEL_BG);
-        RectFill(rp, 101, 29, 618, 178);
+        draw_drive_values();
+        draw_drive_action_buttons();
+        return;
     }
 
     if (app->selected_drive < 0 || app->selected_drive >= (LONG)drive_list.count) {
@@ -1505,41 +1699,12 @@ static void draw_drives_data(BOOL full_redraw)
         draw_label_value(120, y, get_string(MSG_NUM_BUFFERS), buffer, 224);
         y += 9;
 
-        /* Speed - display in appropriate units */
-        if (drive->speed_measured) {
-            ULONG speed = drive->speed_bytes_sec;
-            if (speed >= 1000000) {
-                /* MB/s for very fast drives */
-                snprintf(buffer, sizeof(buffer), "%lu.%lu MB/s",
-                         (unsigned long)(speed / 1000000),
-                         (unsigned long)((speed % 1000000) / 100000));
-            } else if (speed >= 10000) {
-                /* KB/s for typical drives */
-                snprintf(buffer, sizeof(buffer), "%lu KB/s",
-                         (unsigned long)(speed / 1000));
-            } else {
-                /* Bytes/s for very slow devices */
-                snprintf(buffer, sizeof(buffer), "%lu B/s", (unsigned long)speed);
-            }
-        } else {
-            snprintf(buffer, sizeof(buffer), "%s", get_string(MSG_DASH_PLACEHOLDER));
-        }
+        format_drive_speed(drive, buffer, sizeof(buffer));
         draw_label_value(120, y, get_string(MSG_SPEED), buffer, 224);
     }
 
     /* Draw bottom buttons */
-    btn = find_button(BTN_DRV_EXIT);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_DRV_SCSI);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_DRV_SPEED);
-    if (btn) draw_button(btn);
-
-    /* Draw pager buttons (only added when the list spans pages) */
-    btn = find_button(BTN_DRV_PAGE_PREV);
-    if (btn) draw_button(btn);
-    btn = find_button(BTN_DRV_PAGE_NEXT);
-    if (btn) draw_button(btn);
+    draw_drive_action_buttons();
 }
 
 /*
@@ -1647,6 +1812,7 @@ void drives_view_handle_button(ButtonID id)
                 show_status_overlay(get_string(MSG_MEASURING_SPEED));
                 measure_drive_speed(app->selected_drive);
                 hide_status_overlay();
+                draw_drive_speed_row();
             }
             break;
 
