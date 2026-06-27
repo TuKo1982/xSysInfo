@@ -475,7 +475,7 @@ void enumerate_mmu_entries(void)
                         }
                     }
                     entry = &mmu_list.entries[mmu_list.count];
-                    snprintf(entry->name, sizeof(entry->name), "%s", buffer);
+                    copy_string(entry->name, buffer, sizeof(entry->name));
                     mmu_list.count++;
                 }
                 if (list) {

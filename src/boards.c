@@ -180,8 +180,8 @@ static BOOL append_pci_board(struct pci_dev *pci, const char *manufacturer,
     snprintf(board->address_string, sizeof(board->address_string), "--");
     snprintf(board->size_string, sizeof(board->size_string), "--");
     if (class_name && class_name[0]) {
-        snprintf(board->detail_string, sizeof(board->detail_string), "%s",
-                 class_name);
+        copy_string(board->detail_string, class_name,
+                    sizeof(board->detail_string));
     } else {
         snprintf(board->detail_string, sizeof(board->detail_string), "PCI");
     }

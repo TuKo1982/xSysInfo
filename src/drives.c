@@ -307,6 +307,23 @@ static void bstr_to_cstr(BSTR bstr, char *cstr, ULONG maxlen)
     cstr[len] = '\0';
 }
 
+static void bstr_to_device_name(BSTR bstr, char *name, ULONG maxlen)
+{
+    size_t len;
+
+    if (!name || maxlen == 0) return;
+    if (maxlen == 1) {
+        name[0] = '\0';
+        return;
+    }
+
+    name[0] = '\0';
+    bstr_to_cstr(bstr, name, maxlen - 1);
+    len = strlen(name);
+    name[len++] = ':';
+    name[len] = '\0';
+}
+
 /* Helpers */
 static BOOL is_floppy_device(ULONG total_blocks);
 
@@ -372,7 +389,6 @@ static struct DosList *MyNextDosEntry(struct DosList *list, ULONG flags)
 static void scan_dos_list(void)
 {
     struct DosList *dol;
-    char buffer[32];
 
     debug("  drives: Locking DosList...\n");
     dol = MyLockDosList(LDF_DEVICES | LDF_READ);
@@ -383,14 +399,12 @@ static void scan_dos_list(void)
             debug("  drives: MAX_DRIVES reached, skipping remaining devices\n");
             break;
         }
-        buffer[0] = '\0';
         DriveInfo *drive = &drive_list.drives[drive_list.count];
         drive->is_valid = FALSE;
 
         /* Get device name */
-        bstr_to_cstr(dol->dol_Name, buffer, sizeof(buffer) - 2);
-        snprintf(drive->device_name, sizeof(drive->device_name), "%s:",
-                     buffer);
+        bstr_to_device_name(dol->dol_Name, drive->device_name,
+                            sizeof(drive->device_name));
 
         debug("  drives: Found device '%s' task=$%08lx startup=$%08lx\n",
               (LONG)drive->device_name, (ULONG)dol->dol_Task,
@@ -511,11 +525,9 @@ static void match_volumes_to_drives(void)
     memset(dev_tasks, 0, sizeof(dev_tasks));
     dev_dol = MyLockDosList(LDF_DEVICES | LDF_READ);
     while ((dev_dol = MyNextDosEntry(dev_dol, LDF_DEVICES)) != NULL) {
-        char buffer[32];
         char dev_name[34];
-        bstr_to_cstr(dev_dol->dol_Name, buffer, sizeof(buffer) - 2);
-        snprintf(dev_name, sizeof(dev_name), "%s:",
-                     buffer);
+        bstr_to_device_name(dev_dol->dol_Name, dev_name,
+                            sizeof(dev_name));
 
         /* Find matching drive in our list */
         for (i = 0; i < drive_list.count; i++) {
