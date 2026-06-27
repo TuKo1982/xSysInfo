@@ -10,6 +10,8 @@
 #include <inttypes.h>
 
 #include <graphics/gfxmacros.h>
+#include <graphics/gfx.h>
+#include <graphics/gfxbase.h>
 #include <graphics/rastport.h>
 #include <graphics/text.h>
 #include <devices/inputevent.h>
@@ -44,6 +46,7 @@ extern SoftwareList mmu_list;
 extern MemoryRegionList memory_regions;
 extern DriveList drive_list;
 extern BoardList board_list;
+extern struct GfxBase *GfxBase;
 
 /* Button definitions for main view */
 #define MAX_BUTTONS 32
@@ -86,6 +89,23 @@ static const UWORD xsysinfo_logo_template[XSYSINFO_LOGO_H][XSYSINFO_LOGO_BPR / 2
     { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 }
 };
 
+typedef struct {
+    struct BitMap legacy_bitmap;
+    struct BitMap *bitmap;
+    WORD x, y, w, h;
+    UBYTE depth;
+    BOOL valid;
+    BOOL allocated_bitmap;
+} OverlayBackup;
+
+static OverlayBackup overlay_backup;
+
+/*
+ * BltBitMap()/ClipBlit() use A as the mask, B as source, and C/D as
+ * destination. ABC|ABNC copies source pixels through the mask.
+ */
+#define OVERLAY_COPY_MINTERM (ABC | ABNC)
+
 /* Forward declarations */
 static void draw_header(void);
 static void draw_xsysinfo_logo(WORD x, WORD y);
@@ -100,6 +120,10 @@ static void update_software_list(void);
 static void update_hardware_text(void);
 static void refresh_all_cache_buttons(void);
 static void show_timed_overlay(const char *message, ULONG ticks);
+static void show_status_overlay_centered(const char *message,
+                                         WORD area_x, WORD area_y,
+                                         WORD area_w, WORD area_h);
+static void show_speed_status_overlay(const char *message);
 static const char *get_hardware_page_label(void);
 static void update_cache_button_enabled_states(void);
 static void format_cpu_value(char *buffer, size_t size);
@@ -397,13 +421,14 @@ void main_view_handle_button(ButtonID id)
             break;
 
         case BTN_SPEED:
-            show_status_overlay(get_string(MSG_MEASURING_SPEED));
+            show_speed_status_overlay(get_string(MSG_MEASURING_SPEED));
             Forbid();
             run_benchmarks();
             Permit();
-            // not needed, hide_status_overlay redraws us
-            //update_hardware_text();
             hide_status_overlay();
+            update_button_states();
+            draw_speed_panel();
+            draw_bottom_buttons();
             break;
 
         case BTN_PRINT:
@@ -2345,10 +2370,127 @@ static UWORD blank_pointer[] = {
     0x0000, 0x0000   /* Reserved */
 };
 
-/*
- * Show status overlay (red background, centered message, no interaction)
- */
-void show_status_overlay(const char *message)
+static void free_overlay_backup(void)
+{
+    UBYTE plane;
+
+    WaitBlit();
+
+    if (overlay_backup.allocated_bitmap && overlay_backup.bitmap) {
+        FreeBitMap(overlay_backup.bitmap);
+    } else {
+        for (plane = 0; plane < overlay_backup.depth && plane < 8; plane++) {
+            if (overlay_backup.legacy_bitmap.Planes[plane]) {
+                FreeRaster(overlay_backup.legacy_bitmap.Planes[plane],
+                           overlay_backup.w, overlay_backup.h);
+                overlay_backup.legacy_bitmap.Planes[plane] = NULL;
+            }
+        }
+    }
+
+    overlay_backup.bitmap = NULL;
+    overlay_backup.valid = FALSE;
+    overlay_backup.depth = 0;
+    overlay_backup.allocated_bitmap = FALSE;
+}
+
+static BOOL save_overlay_area(WORD x, WORD y, WORD w, WORD h)
+{
+    struct RastPort backup_rp;
+    ULONG depth;
+    UBYTE plane;
+
+    if (!app->rp || !app->rp->BitMap || w <= 0 || h <= 0)
+        return FALSE;
+
+    if (GfxBase->LibNode.lib_Version >= 39) {
+        depth = GetBitMapAttr(app->rp->BitMap, BMA_DEPTH);
+    } else {
+        depth = app->rp->BitMap->Depth;
+    }
+    if (depth == 0 || depth > 255)
+        return FALSE;
+
+    if (overlay_backup.valid)
+        free_overlay_backup();
+
+    memset(&overlay_backup.legacy_bitmap, 0, sizeof(overlay_backup.legacy_bitmap));
+
+    overlay_backup.x = x;
+    overlay_backup.y = y;
+    overlay_backup.w = w;
+    overlay_backup.h = h;
+    overlay_backup.depth = (UBYTE)depth;
+    overlay_backup.bitmap = NULL;
+    overlay_backup.allocated_bitmap = FALSE;
+
+    if (GfxBase->LibNode.lib_Version >= 39) {
+        ULONG flags = BMF_CLEAR;
+
+        if (app->use_custom_screen)
+            flags |= BMF_STANDARD;
+
+        overlay_backup.bitmap = AllocBitMap(w, h, depth, flags,
+                                            app->rp->BitMap);
+        if (overlay_backup.bitmap) {
+            overlay_backup.allocated_bitmap = TRUE;
+        }
+    }
+
+    if (!overlay_backup.bitmap) {
+        if (depth > 8)
+            return FALSE;
+
+        InitBitMap(&overlay_backup.legacy_bitmap, depth, w, h);
+        overlay_backup.bitmap = &overlay_backup.legacy_bitmap;
+    }
+
+    if (!overlay_backup.allocated_bitmap) {
+        for (plane = 0; plane < depth; plane++) {
+            overlay_backup.legacy_bitmap.Planes[plane] = AllocRaster(w, h);
+            if (!overlay_backup.legacy_bitmap.Planes[plane]) {
+                free_overlay_backup();
+                return FALSE;
+            }
+        }
+    }
+
+    InitRastPort(&backup_rp);
+    backup_rp.BitMap = overlay_backup.bitmap;
+
+    WaitBlit();
+    SetRast(&backup_rp, 0);
+    WaitBlit();
+    ClipBlit(app->rp, x, y, &backup_rp, 0, 0, w, h,
+             OVERLAY_COPY_MINTERM);
+    WaitBlit();
+    overlay_backup.valid = TRUE;
+
+    return TRUE;
+}
+
+static BOOL restore_overlay_area(void)
+{
+    struct RastPort backup_rp;
+
+    if (!overlay_backup.valid)
+        return FALSE;
+
+    InitRastPort(&backup_rp);
+    backup_rp.BitMap = overlay_backup.bitmap;
+
+    ClipBlit(&backup_rp, 0, 0, app->rp,
+             overlay_backup.x, overlay_backup.y,
+             overlay_backup.w, overlay_backup.h, OVERLAY_COPY_MINTERM);
+    WaitBlit();
+    free_overlay_backup();
+
+    return TRUE;
+}
+
+static void show_status_overlay_centered(const char *message,
+                                         WORD area_x, WORD area_y,
+                                         WORD area_w, WORD area_h)
 {
     struct RastPort *rp = app->rp;
     WORD text_len = strlen(message);
@@ -2356,8 +2498,10 @@ void show_status_overlay(const char *message)
     /* Dialog dimensions and position (centered) */
     WORD dialog_w = (text_len * 8) + 32;
     WORD dialog_h = 28;
-    WORD dialog_x = (SCREEN_WIDTH - dialog_w) / 2;
-    WORD dialog_y = (app->screen_height - dialog_h) / 2;
+    WORD dialog_x = area_x + (area_w - dialog_w) / 2;
+    WORD dialog_y = area_y + (area_h - dialog_h) / 2;
+
+    save_overlay_area(dialog_x, dialog_y, dialog_w, dialog_h);
 
     /* Hide mouse pointer with blank sprite */
     SetPointer(app->window, blank_pointer, 1, 1, 0, 0);
@@ -2382,15 +2526,36 @@ void show_status_overlay(const char *message)
 }
 
 /*
+ * Show status overlay (red background, centered message, no interaction)
+ */
+void show_status_overlay(const char *message)
+{
+    show_status_overlay_centered(message, 0, 0,
+                                 SCREEN_WIDTH, app->screen_height);
+}
+
+static void show_speed_status_overlay(const char *message)
+{
+    show_status_overlay_centered(message,
+                                 SPEED_PANEL_X, SPEED_PANEL_Y,
+                                 SPEED_PANEL_W, SPEED_PANEL_H);
+}
+
+/*
  * Hide status overlay and restore view
  */
 void hide_status_overlay(void)
 {
+    BOOL restored;
+
     /* Restore mouse pointer */
     ClearPointer(app->window);
 
-    /* Redraw the main view to restore the area */
-    redraw_current_view();
+    restored = restore_overlay_area();
+    if (!restored) {
+        /* Fallback for deep/unknown bitmaps or allocation failure. */
+        redraw_current_view();
+    }
 }
 
 /*
@@ -2551,6 +2716,8 @@ BOOL show_filename_requester(const char *title, char *filename, ULONG filename_s
     Button ok_btn = { ok_x, btn_y, btn_w, btn_h, get_string(MSG_BTN_OK), BTN_NONE, TRUE, FALSE };
     Button cancel_btn = { cancel_x, btn_y, btn_w, btn_h, get_string(MSG_BTN_CANCEL), BTN_NONE, TRUE, FALSE };
 
+    save_overlay_area(dialog_x, dialog_y, dialog_w, dialog_h);
+
     /* Initialize cursor position at end of filename */
     filename_len = strlen(filename);
     cursor_pos = filename_len;
@@ -2693,8 +2860,7 @@ BOOL show_filename_requester(const char *title, char *filename, ULONG filename_s
         }
     }
 
-    /* Redraw the main view to restore the area */
-    redraw_current_view();
+    restore_overlay_area();
 
     return result;
 }
