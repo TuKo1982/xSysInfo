@@ -1143,14 +1143,14 @@ ULONG measure_drive_speed(ULONG index)
     }
 
     /* Create message port */
-    port = CreateMsgPort();
+    port = (struct MsgPort *)CreatePort(NULL, 0);
     if (!port) {
         debug("  drives: Failed to create message port\n");
         goto cleanup;
     }
 
     /* Create I/O request */
-    io = (struct IOStdReq *)CreateIORequest(port, sizeof(struct IOStdReq));
+    io = (struct IOStdReq *)CreateExtIO(port, sizeof(struct IOStdReq));
     if (!io) {
         debug("  drives: Failed to create IO request\n");
         goto cleanup;
@@ -1367,8 +1367,8 @@ cleanup:
         CloseDevice((struct IORequest *)io);
         WaitTOF();
     }
-    if (io) DeleteIORequest((struct IORequest *)io);
-    if (port) DeleteMsgPort(port);
+    if (io) DeleteExtIO((struct IORequest *)io);
+    if (port) DeletePort(port);
 
     if (!device_opened) {
         /* If we failed to open or allocate, ensure marked as failed */
