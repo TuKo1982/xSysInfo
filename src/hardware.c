@@ -415,9 +415,15 @@ void detect_mmu(void)
             switch (GetMMUType())
             {
             case MUTYPE_68851:
-                hw_info.mmu_type = MMU_68851;
-                copy_string(hw_info.mmu_string, "68851",
-                            sizeof(hw_info.mmu_string));
+                if (hw_info.cpu_type == CPU_68030) {
+                    hw_info.mmu_type = MMU_68030;
+                    copy_string(hw_info.mmu_string, "68030",
+                                sizeof(hw_info.mmu_string));
+                } else {
+                    hw_info.mmu_type = MMU_68851;
+                    copy_string(hw_info.mmu_string, "68851",
+                                sizeof(hw_info.mmu_string));
+                }
                 hw_info.mmu_enabled = TRUE;
                 break;
             case MUTYPE_68030:
