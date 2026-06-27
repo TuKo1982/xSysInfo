@@ -111,7 +111,8 @@ static void draw_header(void);
 static void draw_xsysinfo_logo(WORD x, WORD y);
 static void draw_software_panel(void);
 static void draw_speed_panel(void);
-static void refresh_speed_bars(void);
+static void refresh_speed_panel_contents(void);
+static void refresh_speed_bars(BOOL redraw_scale_button);
 static void draw_hardware_panel(void);
 static void draw_bottom_buttons(void);
 static void draw_cache_buttons(void);
@@ -126,6 +127,7 @@ static void show_status_overlay_centered(const char *message,
 static void show_speed_status_overlay(const char *message);
 static const char *get_hardware_page_label(void);
 static void update_cache_button_enabled_states(void);
+static void refresh_hardware_benchmark_rows(void);
 static void format_cpu_value(char *buffer, size_t size);
 static void format_fpu_value(char *buffer, size_t size);
 static void format_mmu_value(char *buffer, size_t size);
@@ -427,8 +429,8 @@ void main_view_handle_button(ButtonID id)
             Permit();
             hide_status_overlay();
             update_button_states();
-            draw_speed_panel();
-            draw_bottom_buttons();
+            refresh_hardware_benchmark_rows();
+            refresh_speed_panel_contents();
             break;
 
         case BTN_PRINT:
@@ -460,7 +462,7 @@ void main_view_handle_button(ButtonID id)
         case BTN_SCALE_TOGGLE:
             app->bar_scale = (app->bar_scale == SCALE_SHRINK) ?
                              SCALE_EXPAND : SCALE_SHRINK;
-            refresh_speed_bars();
+            refresh_speed_bars(TRUE);
             break;
 
         case BTN_ICACHE:
@@ -1071,6 +1073,18 @@ void draw_label_value(WORD x, WORD y, const char *label, const char *value, WORD
     draw_label_value_max(x, y, label, value, offset, SCREEN_WIDTH - 4);
 }
 
+static void draw_hardware_overview_row(WORD y, const char *label,
+                                       const char *value)
+{
+    struct RastPort *rp = app->rp;
+
+    SetAPen(rp, COLOR_PANEL_BG);
+    RectFill(rp, HARDWARE_PANEL_X + 2, y - 7,
+             HARDWARE_PANEL_X + HARDWARE_PANEL_W - 3, y);
+    draw_label_value(HARDWARE_PANEL_X + 4, y, label, value,
+                     HARDWARE_OVERVIEW_VALUE_OFFSET);
+}
+
 static void format_cpu_value(char *buffer, size_t size)
 {
     char mhz_buf[16];
@@ -1111,6 +1125,29 @@ static void format_fpu_value(char *buffer, size_t size)
                      hw_info.fpu_string, get_string(MSG_OFF));
         }
     }
+}
+
+static void refresh_hardware_benchmark_rows(void)
+{
+    char buffer[74];
+    WORD y;
+
+    if (app->current_view != VIEW_MAIN ||
+        app->hardware_type != HARDWARE_STD) {
+        return;
+    }
+
+    y = HARDWARE_PANEL_Y + 24 + 5 * 8;
+
+    format_cpu_value(buffer, sizeof(buffer));
+    draw_hardware_overview_row(y, get_string(MSG_CPU_MHZ), buffer);
+    y += 8;
+
+    format_fpu_value(buffer, sizeof(buffer));
+    draw_hardware_overview_row(y, get_string(MSG_FPU), buffer);
+
+    y += 16;
+    draw_hardware_overview_row(y, get_string(MSG_COMMENT), hw_info.comment);
 }
 
 static void format_mmu_value(char *buffer, size_t size)
@@ -1511,18 +1548,21 @@ void draw_single_bar(WORD x, WORD y, ULONG value, ULONG max_value, WORD color)
 /*
  * Refresh speed bars only (for scale toggle without full redraw)
  */
-static void refresh_speed_bars(void)
+static void refresh_speed_bars(BOOL redraw_scale_button)
 {
     WORD y;
     ULONG max_value, cur_value;
     int i;
 
     /* Update scale toggle button */
-    Button *scale_btn = find_button(BTN_SCALE_TOGGLE);
-    if (scale_btn) {
-        scale_btn->label = app->bar_scale == SCALE_SHRINK ?
-                           get_string(MSG_SHRINK) : get_string(MSG_EXPAND);
-        draw_cycle_button(scale_btn);
+    if (redraw_scale_button) {
+        Button *scale_btn = find_button(BTN_SCALE_TOGGLE);
+        if (scale_btn) {
+            scale_btn->label = app->bar_scale == SCALE_SHRINK ?
+                               get_string(MSG_SHRINK) :
+                               get_string(MSG_EXPAND);
+            draw_cycle_button(scale_btn);
+        }
     }
 
     if (app->bar_scale == SCALE_EXPAND) {
@@ -1560,20 +1600,14 @@ static void refresh_speed_bars(void)
 }
 
 /*
- * Draw speed comparison panel
+ * Draw speed comparison panel contents below the title strip.
  */
-static void draw_speed_panel(void)
+static void draw_speed_panel_contents(BOOL redraw_scale_button)
 {
     struct RastPort *rp = app->rp;
     WORD y;
     char buffer[64];
     int i;
-
-    draw_panel(SPEED_PANEL_X, SPEED_PANEL_Y,
-               SPEED_PANEL_W, SPEED_PANEL_H, NULL);
-
-    draw_panel(SPEED_PANEL_X + 1, SPEED_PANEL_Y + 1,
-               SPEED_PANEL_W - 2, 14, get_string(MSG_SPEED_COMPARISONS));
 
     /* Draw "You" entry first (below the ruler band) */
     y = SPEED_PANEL_Y + 26;
@@ -1620,7 +1654,7 @@ static void draw_speed_panel(void)
     }
 
     /* Draw cycle button and all speed bars */
-    refresh_speed_bars();
+    refresh_speed_bars(redraw_scale_button);
 
     /* MIPS and MFLOPS */
     snprintf(buffer, sizeof(buffer), "%s ", get_string(MSG_MIPS));
@@ -1690,6 +1724,34 @@ static void draw_speed_panel(void)
     }
     SetAPen(rp, COLOR_HIGHLIGHT);
     TightText(rp, SPEED_PANEL_X + 4, y, (CONST_STRPTR)buffer, -1, 4);
+}
+
+static void refresh_speed_panel_contents(void)
+{
+    struct RastPort *rp = app->rp;
+
+    SetAPen(rp, COLOR_PANEL_BG);
+    /* Bottom buttons start at x=177/y=176; leave that area intact. */
+    RectFill(rp, SPEED_PANEL_X + 1, SPEED_PANEL_Y + 15,
+             SPEED_PANEL_X + SPEED_PANEL_W - 2,
+             SPEED_PANEL_Y + 77);
+    RectFill(rp, SPEED_PANEL_X + 1, SPEED_PANEL_Y + 78,
+             SPEED_PANEL_X + 176, SPEED_PANEL_Y + SPEED_PANEL_H - 2);
+    draw_speed_panel_contents(FALSE);
+}
+
+/*
+ * Draw speed comparison panel
+ */
+static void draw_speed_panel(void)
+{
+    draw_panel(SPEED_PANEL_X, SPEED_PANEL_Y,
+               SPEED_PANEL_W, SPEED_PANEL_H, NULL);
+
+    draw_panel(SPEED_PANEL_X + 1, SPEED_PANEL_Y + 1,
+               SPEED_PANEL_W - 2, 14, get_string(MSG_SPEED_COMPARISONS));
+
+    draw_speed_panel_contents(TRUE);
 }
 
 /*
