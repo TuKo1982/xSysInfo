@@ -167,29 +167,29 @@ BOOL detect_emu68_systems(void)
 void detect_cpu(void)
 {
     /*
-    First check for emulated CPUs
-    */
+     * First check for emulated CPUs
+     */
     if (hw_info.cpu_type == CPU_EMU) {
         return;
     }
 
     /*
-    now determine kickstart:
-    Kick <=1.3 does only know 68000-68020
-    Kick <=3.1 does not know >=68060
-    */
+     * now determine kickstart:
+     *  Kick <=1.3 does only know 68000-68020
+     *  Kick <=3.1 does not know >=68060
+     */
    UWORD attnFlags = SysBase->AttnFlags;
-    if ((attnFlags & (UWORD)AFF_68010) == 0) { //not even a 68010?
+    if ((attnFlags & (UWORD)AFF_68010) == 0) { // not even a 68010?
         snprintf(hw_info.cpu_string, sizeof(hw_info.cpu_string), "68000");
         hw_info.cpu_type = CPU_68000;
     }
 
-    else if ((attnFlags & (UWORD)AFF_68020) == 0) { //not a 68020?
+    else if ((attnFlags & (UWORD)AFF_68020) == 0) { // not a 68020?
         snprintf(hw_info.cpu_string, sizeof(hw_info.cpu_string), "68010");
         hw_info.cpu_type = CPU_68010;
     }
 
-    else {// we detect now 68030 and 68040 manually , because Kick 1.3 does not know about a 68030+
+    else { // we now detect 68030 and 68040 manually, because Kick 1.3 does not know about a 68030+
         ULONG oldBits, newBits;
 
         // now we have at least a 68020/030

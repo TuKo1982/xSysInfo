@@ -254,6 +254,7 @@ ULONG get_mhz_cpu(void)
         case CPU_68EC060:
         case CPU_68LC060:
         case CPU_68080:
+        case CPU_EMU:
             maxMultiplier = MAX_MULTIPLY*16;
             startMultiplier = MAX_MULTIPLY/16;
             break;
@@ -267,7 +268,7 @@ ULONG get_mhz_cpu(void)
     for (multiplier = startMultiplier; multiplier <= maxMultiplier && count < MIN_MHZ_MEASURE; multiplier *= 2)
     {
         loop = CPULOOPS * multiplier;
-        count = (uint64_t) measure_loop_overhead(loop); //this counts the speed of looping
+        count = (uint64_t) measure_loop_overhead(loop); // this compensates for the looping
         if (multiplier >= maxMultiplier || count >= MIN_MHZ_MEASURE) {
             break;
         }
@@ -284,9 +285,9 @@ ULONG get_mhz_cpu(void)
         {
         case CPU_68000:
         case CPU_68010:
-            //see if we run in fastram or chipram (huge difference in speed calc!)
+            // check whether we run in fastram or chipram (huge difference in speed calc!)
             test = __builtin_return_address(0); // this gets the return address, which tells me if we are running in fast ram
-            // see if it is fast mem!
+            // check whether it is fast mem!
             if ((long unsigned int)test >= 0x200000 && (long unsigned int)test < 0xC00000)
             {
                 // real fastmem!
@@ -319,11 +320,11 @@ ULONG get_mhz_cpu(void)
                     count *=100;
                 }
                 else {
-                    count *=50; //without super scalar the cpu seems 2 times slower!
+                    count *=50; // without super scalar the cpu seems 2 times slower!
                 }
             }
             else {
-                count *=20; //without mmu the 68060 seems 5 times slower!
+                count *=20; // without mmu the 68060 seems 5 times slower!
             }
             break;
         default:
@@ -378,12 +379,12 @@ ULONG get_mhz_cpu(void)
 ULONG get_mhz_fpu(void)
 {
 
-    /*make some sanity tests:
-    No FPU -> nothing,
-    Unknown FPU -> nothing
-    68EC/LC040/060 -> No FPU nothing
-    68040 or 68060 CPU: Same as CPU Frequency
-    */
+    /* make some sanity tests:
+     *  No FPU -> nothing,
+     *  Unknown FPU -> nothing
+     *  68EC/LC040/060 -> No FPU nothing
+     *  68040 or 68060 CPU: Same as CPU Frequency
+     */
 
     if (FPU_NONE == hw_info.fpu_type || FPU_UNKNOWN == hw_info.fpu_type)
     {
@@ -432,7 +433,7 @@ ULONG get_mhz_fpu(void)
 
         E_Freq = read_benchmark_clock(&end);
         Permit();
-        loop = FPULOOPS * multiplier; //the above inlineassembly modifies loop
+        loop = FPULOOPS * multiplier; // the above inline assembly modifies loop
 
         count = (uint64_t) EClock_Diff_in_ms(&start, &end, E_Freq);
 
