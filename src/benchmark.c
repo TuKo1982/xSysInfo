@@ -46,6 +46,14 @@ const ReferenceSystem reference_systems[NUM_REFERENCE_SYSTEMS] = {
     {"A4000", "68060",  50,  91000, 5200,  685},
 };
 
+/*
+ * Keep slow memory tests quick, but force fast regions to run long enough
+ * that timer granularity and loop-overhead subtraction do not dominate.
+ */
+#define MEM_SPEED_FAST_THRESHOLD 50000000UL
+#define MEM_SPEED_TARGET_US 200000UL
+#define MEM_SPEED_MAX_ITERATIONS 32768UL
+
 void format_reference_label(char *buffer, size_t buffer_size, const ReferenceSystem *ref)
 {
     if (!buffer || buffer_size == 0 || !ref) return;
@@ -724,21 +732,20 @@ ULONG measure_loop_overhead(ULONG count)
     return EClock_Diff_in_ms(&start, &end, E_Freq);
 }
 
-/*
- * Measure memory read speed for a given address range
- * Returns speed in bytes per second
- */
-ULONG measure_mem_read_speed(volatile ULONG *src, ULONG buffer_size, ULONG iterations)
+static ULONG measure_mem_read_speed_once(volatile ULONG *src, ULONG buffer_size,
+                                         ULONG iterations, ULONG *elapsed_us)
 {
     ULONG E_Freq;
     struct EClockVal start, end;
     uint64_t elapsed;
     ULONG overhead;
-    ULONG total_read = 0, total_loops = 0;
+    uint64_t total_read = 0;
+    ULONG total_loops = 0;
     ULONG longs_per_read;
     ULONG loop_count;
     ULONG i;
     volatile ULONG *aligned_src;
+    uint64_t speed;
 
     /* Ensure buffer is large enough for our unrolled loop */
     if (!TimerBase) return 0;
@@ -798,10 +805,61 @@ ULONG measure_mem_read_speed(volatile ULONG *src, ULONG buffer_size, ULONG itera
     }
 
     if (elapsed > 0 && total_read > 0) {
-        return (ULONG)(((uint64_t)total_read * 1000000ULL) / elapsed);
+        if (elapsed_us) *elapsed_us = (ULONG)elapsed;
+        speed = (total_read * 1000000ULL) / elapsed;
+        if (speed > ULONG_MAX) return ULONG_MAX;
+        return (ULONG)speed;
     }
 
     return 0;
+}
+
+/*
+ * Measure memory read speed for a given address range
+ * Returns speed in bytes per second
+ */
+ULONG measure_mem_read_speed(volatile ULONG *src, ULONG buffer_size,
+                             ULONG iterations)
+{
+    ULONG elapsed_us = 0;
+    ULONG test_iterations;
+    ULONG speed;
+
+    test_iterations = iterations ? iterations : 1;
+    speed = measure_mem_read_speed_once(src, buffer_size, test_iterations,
+                                        &elapsed_us);
+
+    while (speed >= MEM_SPEED_FAST_THRESHOLD &&
+           elapsed_us < MEM_SPEED_TARGET_US &&
+           test_iterations < MEM_SPEED_MAX_ITERATIONS) {
+        uint64_t next_iterations;
+
+        if (elapsed_us > 0) {
+            next_iterations = ((uint64_t)MEM_SPEED_TARGET_US *
+                               test_iterations) / elapsed_us;
+            next_iterations += test_iterations;
+        } else {
+            next_iterations = (uint64_t)test_iterations * 2;
+        }
+
+        if (next_iterations <= test_iterations)
+            next_iterations = (uint64_t)test_iterations * 2;
+        if (next_iterations > MEM_SPEED_MAX_ITERATIONS)
+            next_iterations = MEM_SPEED_MAX_ITERATIONS;
+        if (next_iterations == test_iterations)
+            break;
+
+        debug("  bench: memory speed %lu B/s in %lu us, retrying with "
+              "%lu iterations\n",
+              speed, elapsed_us, (ULONG)next_iterations);
+
+        test_iterations = (ULONG)next_iterations;
+        elapsed_us = 0;
+        speed = measure_mem_read_speed_once(src, buffer_size, test_iterations,
+                                            &elapsed_us);
+    }
+
+    return speed;
 }
 
 /*
