@@ -29,15 +29,9 @@ BOOL openBattMem(void) //returns false, if not available
 {
     if (BattMemBase == NULL) {
 
-        /* Open dos.library. */
-
-        if ((DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR)"dos.library", 37))) { //check for right version!
-            CloseLibrary ((struct Library *) DOSBase); // Availability check over we can close this now!
-
+        if (DOSBase && DOSBase->dl_lib.lib_Version >= 37) {
             /* Open battmem.resource. */
             BattMemBase = (struct Library *) OpenResource ((CONST_STRPTR)BATTMEMNAME);
-
-
         }
     }
     return BattMemBase != NULL;
