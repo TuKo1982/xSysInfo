@@ -1098,8 +1098,7 @@ static void main_loop(void)
                         case 's':
                         case 'S':
                             if (app->current_view == VIEW_MAIN) {
-                                run_benchmarks();
-                                redraw_current_view();
+                                handle_button_press(BTN_SPEED);
                             }
                             break;
                         case 'p':
