@@ -153,6 +153,14 @@ void format_scaled(char *buffer, size_t size, ULONG value_x100, BOOL round)
 void TightText(struct RastPort *rp, int x, int y, CONST_STRPTR str, int charGap, int spaceWidth)
 {
     int currentX = x;
+    int targetWidth = 0;
+
+    /*
+     * Negative gaps were tuned around Topaz 8. Treat them as target
+     * advances from that font and leave already-narrow fonts alone.
+     */
+    if (charGap < 0)
+        targetWidth = 8 + charGap;
 
     Move(rp, x, y);
 
@@ -161,10 +169,18 @@ void TightText(struct RastPort *rp, int x, int y, CONST_STRPTR str, int charGap,
             currentX += spaceWidth;
         } else {
             int charWidth = TextLength(rp, &str[i], 1);
+            int effectiveGap = charGap;
+
+            if (targetWidth > 0) {
+                if (charWidth <= targetWidth)
+                    effectiveGap = 0;
+                else
+                    effectiveGap = targetWidth - charWidth;
+            }
 
             Move(rp, currentX, y);
             Text(rp, &str[i], 1);
-            currentX += charWidth + charGap;
+            currentX += charWidth + effectiveGap;
         }
     }
 }
