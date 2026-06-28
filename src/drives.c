@@ -290,6 +290,31 @@ static ULONG get_geometry_total_blocks(const DriveInfo *drive)
     return drive->total_blocks;
 }
 
+static BPTR lock_drive_for_info(const DriveInfo *drive, BOOL silent)
+{
+    struct Process *proc = NULL;
+    APTR old_window = NULL;
+    BPTR lock;
+
+    if (!drive) return 0;
+
+    if (silent) {
+        proc = (struct Process *)FindTask(NULL);
+        if (proc) {
+            old_window = proc->pr_WindowPtr;
+            proc->pr_WindowPtr = (APTR)-1;
+        }
+    }
+
+    lock = Lock((CONST_STRPTR)drive->device_name, ACCESS_READ);
+
+    if (silent && proc) {
+        proc->pr_WindowPtr = old_window;
+    }
+
+    return lock;
+}
+
 /*
  * Convert BSTR to C string
  */
@@ -326,6 +351,7 @@ static void bstr_to_device_name(BSTR bstr, char *name, ULONG maxlen)
 
 /* Helpers */
 static BOOL is_floppy_device(ULONG total_blocks);
+static BOOL drive_has_media_evidence(const DriveInfo *drive);
 
 #define MIN_KICK_DEVICE_VERSION 36
 
@@ -584,15 +610,23 @@ static void query_drive_details(void)
         BPTR lock;
 
         /* Avoid hanging on empty floppies; require a volume to be present */
-        if (!has_volume && is_floppy) continue;
+        if (!has_volume && is_floppy) {
+            drive->disk_state = DISK_NO_DISK;
+            continue;
+        }
         /* Skip clearly invalid entries */
-        if (!drive->is_valid && !has_volume) continue;
+        if (!drive->is_valid && !has_volume) {
+            drive->disk_state = DISK_NO_DISK;
+            continue;
+        }
 
-        debug("  drives: Trying Info() on '%s'\n", (LONG)drive->device_name);
-        lock = Lock((CONST_STRPTR)drive->device_name, ACCESS_READ);
+        debug("  drives: Trying Info() on '%s'%s\n",
+              (LONG)drive->device_name,
+              (LONG)(has_volume ? "" : " with requesters suppressed"));
+        lock = lock_drive_for_info(drive, !has_volume);
         if (!lock) {
             debug("  drives: Lock failed on '%s'\n", (LONG)drive->device_name);
-            if (drive->disk_state == DISK_OK) {
+            if (!has_volume || drive->disk_state == DISK_OK) {
                 drive->disk_state = DISK_NO_DISK;
             }
             continue;
@@ -802,6 +836,19 @@ static BOOL is_floppy_device(ULONG total_blocks)
     return (total_blocks > 0 && total_blocks <= 7040);
 }
 
+static BOOL drive_has_media_evidence(const DriveInfo *drive)
+{
+    if (!drive || drive->disk_state == DISK_NO_DISK) {
+        return FALSE;
+    }
+
+    if (is_floppy_device(get_geometry_total_blocks(drive))) {
+        return TRUE;
+    }
+
+    return drive->volume_name[0] != '\0' || drive->has_info;
+}
+
 /*
  * Check if a disk is present in the drive using TD_CHANGESTATE.
  * Returns TRUE if a disk is present, FALSE otherwise.
@@ -825,10 +872,16 @@ BOOL check_disk_present(ULONG index)
         return FALSE;
     }
 
-    /* Only check floppy-type devices */
+    /* Only floppy-type devices have a cheap TD_CHANGESTATE probe here. */
     if (!is_floppy_device(get_geometry_total_blocks(drive))) {
-        /* Non-floppy devices are assumed to have media present */
-        return TRUE;
+        if (drive_has_media_evidence(drive)) {
+            return TRUE;
+        }
+
+        drive->disk_state = DISK_NO_DISK;
+        debug("  drives: %s has no volume or Info(), treating as no media\n",
+              (LONG)drive->device_name);
+        return FALSE;
     }
 
     /* Create message port */
@@ -863,7 +916,11 @@ BOOL check_disk_present(ULONG index)
     }
 
     /* Update drive state based on result */
-    if (!disk_present) {
+    if (disk_present) {
+        if (drive->disk_state == DISK_NO_DISK) {
+            drive->disk_state = DISK_UNKNOWN;
+        }
+    } else {
         drive->disk_state = DISK_NO_DISK;
         drive->volume_name[0] = '\0';
     }
@@ -1114,6 +1171,14 @@ ULONG measure_drive_speed(ULONG index)
               (LONG)drive->device_name);
         /* Mark as measured with 0 speed so user sees it was attempted */
         drive->speed_measured = TRUE;
+        drive->speed_bytes_sec = 0;
+        return 0;
+    }
+
+    if (!drive_has_media_evidence(drive)) {
+        debug("  drives: No media evidence for speed test on %s\n",
+              (LONG)drive->device_name);
+        drive->speed_measured = FALSE;
         drive->speed_bytes_sec = 0;
         return 0;
     }
@@ -1773,8 +1838,8 @@ void drives_view_update_buttons(void)
         scsi_enabled = drive->scsi_supported;
         /* Speed needs a disk and an exec device to read from; volume-only
          * entries (RAM:, mounts without a parseable FSSM) have neither */
-        speed_enabled = (drive->disk_state != DISK_NO_DISK &&
-                         drive->handler_name[0] != '\0');
+        speed_enabled = (drive->handler_name[0] != '\0' &&
+                         drive_has_media_evidence(drive));
     }
 
     /* Action buttons */
