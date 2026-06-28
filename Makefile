@@ -199,6 +199,8 @@ src/dhry_2.o: src/dhry_2.c src/dhry.h
 
 # Disk creation
 DISK = xsysinfo-$(FULL_VERSION).adf
+DISK_TITLE = $(shell printf '%s' "xSysInfo-$(FULL_VERSION)" | \
+	sed 's/-dirty$$//' | cut -c1-30)
 
 # Downloads directory and files
 DOWNLOAD_DIR = downloads
@@ -376,7 +378,7 @@ TinySetPatch: $(TINYSETPATCH_SRC) $(TINYSETPATCH_DIR)/Makefile Makefile
 
 disk: $(TARGET) download-libs TinySetPatch $(STACK)
 	@echo "  DISK"
-	@xdftool $(DISK) format "xSysInfo"
+	@xdftool $(DISK) format "$(DISK_TITLE)"
 	@xdftool $(DISK) write $(TARGET) $(TARGET)
 	@xdftool $(DISK) write docs/$(TARGET).info $(TARGET).info
 	@xdftool $(DISK) write docs/Disk.info Disk.info
