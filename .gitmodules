@@ -1,9 +1,9 @@
 [submodule "3rdparty/identify"]
 	path = 3rdparty/identify
-	url = https://codeberg.org/shred/identify.git
+	url = https://github.com/reinauer/identify
 [submodule "3rdparty/flexcat"]
 	path = 3rdparty/flexcat
 	url = https://github.com/reinauer/flexcat
 [submodule "3rdparty/TinySetPatch"]
 	path = 3rdparty/TinySetPatch
-	url = https://github.com/reinauer/TinySetPatch.git
+	url = https://github.com/reinauer/TinySetPatch
