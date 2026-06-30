@@ -1657,11 +1657,14 @@ static void draw_speed_panel_contents(BOOL redraw_scale_button)
         if (bench_results.benchmarks_valid && reference_systems[i].dhrystones > 0) {
             ULONG factor_x100 = (bench_results.dhrystones * 100) / reference_systems[i].dhrystones;
             char factor_str[16];
-        int factor_off = 0;
-        if (factor_x100 <= 100000) factor_str[factor_off++] = ' ';
-        if (factor_x100 <= 10000) factor_str[factor_off++] = ' ';
-        if (factor_x100 <= 1000) factor_str[factor_off++] = ' ';
-            format_scaled(factor_str + factor_off, sizeof(factor_str)-factor_off, factor_x100, FALSE);
+            int factor_off = 0;
+            BOOL round_factor = (factor_x100 >= 100000);
+
+            if (factor_x100 <= 100000) factor_str[factor_off++] = ' ';
+            if (factor_x100 <= 10000) factor_str[factor_off++] = ' ';
+            if (factor_x100 <= 1000) factor_str[factor_off++] = ' ';
+            format_scaled(factor_str + factor_off, sizeof(factor_str) - factor_off,
+                          factor_x100, round_factor);
             SetAPen(rp, COLOR_HIGHLIGHT);
             TightText(rp, SPEED_PANEL_X + 125, y, (CONST_STRPTR)factor_str, -1, 7);
         }
