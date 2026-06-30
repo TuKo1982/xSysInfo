@@ -244,11 +244,6 @@ static void parse_tooltypes(void)
             g_debug_enabled = TRUE;
         }
 
-        /* Check for BRIEF tooltype */
-        if (find_icon_tooltype(tooltypes, ICON_STR("BRIEF"))) {
-            g_brief_mode = TRUE;
-        }
-
         /* Check for DARK tooltype */
         if (find_icon_tooltype(tooltypes, ICON_STR("DARK"))) {
             app->dark_mode = TRUE;
