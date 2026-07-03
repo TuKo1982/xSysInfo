@@ -1,5 +1,5 @@
 ## version $VER: xSysInfo.catalog 1.0 (13.05.2026)
-## language portuguÍs
+## language portugu√™s
 ## codeset 4
 ;
 ; Portuguese translation for xSysInfo
@@ -8,7 +8,7 @@
 ; Header strings
 ;
 MSG_TAGLINE
-Um Programa de InformaÁ„o do Sistema Amiga
+Um Programa de Informa√ß√£o do Sistema Amiga
 ;
 MSG_CONTACT_LABEL
 Contacto:
@@ -17,22 +17,22 @@ MSG_SYSTEM_SOFTWARE
 SOFTWARE DO SISTEMA INSTALADO
 ;
 MSG_INTERNAL_HARDWARE
-INFORMA«√O DE HARDWARE
+INFORMA√á√ÉO DE HARDWARE
 ;
 MSG_SPEED_COMPARISONS
-COMPARA«’ES DE VELOCIDADE
+COMPARA√á√ïES DE VELOCIDADE
 ;
 MSG_MEMORY_INFO
-INFORMA«√O DE MEM”RIA
+INFORMA√á√ÉO DE MEM√ìRIA
 ;
 MSG_BOARDS_INFO
-INFORMA«√O DE PLACAS AUTOCONFIG
+INFORMA√á√ÉO DE PLACAS AUTOCONFIG
 ;
 MSG_DRIVES_INFO
-INFORMA«√O DE UNIDADES
+INFORMA√á√ÉO DE UNIDADES
 ;
 MSG_SCSI_INFO
-INFORMA«√O DE DISPOSITIVOS SCSI
+INFORMA√á√ÉO DE DISPOSITIVOS SCSI
 ;
 MSG_LIBRARIES
 BIBLIOTECAS
@@ -53,7 +53,7 @@ MSG_SHRINK
 REDUZIR
 ;
 MSG_CLOCK
-RelÛgio
+Rel√≥gio
 ;
 MSG_DMA_GFX
 DMA/Gfx
@@ -62,7 +62,7 @@ MSG_MODE
 Modo
 ;
 MSG_DISPLAY
-Ecr„
+Ecr√£
 ;
 MSG_CPU_MHZ
 CPU/MHz
@@ -80,7 +80,7 @@ MSG_SSP
 SSP
 ;
 MSG_COMMENT
-Coment·rio
+Coment√°rio
 ;
 MSG_HORIZ_KHZ
 Horiz KHz
@@ -95,7 +95,7 @@ MSG_GARY_REV
 Rev. Gary
 ;
 MSG_CARD_SLOT
-Slot de Cart„o
+Slot de Cart√£o
 ;
 MSG_VERT_HZ
 Vert Hz
@@ -152,19 +152,19 @@ MSG_REF_A4000
 A4000 68040 25MHz
 ;
 MSG_REF_YOU
-VocÍ
+Voc√™
 ;
 MSG_START_ADDRESS
-ENDERE«O INICIAL
+ENDERE√áO INICIAL
 ;
 MSG_END_ADDRESS
-ENDERE«O FINAL
+ENDERE√áO FINAL
 ;
 MSG_TOTAL_SIZE
 TAMANHO TOTAL
 ;
 MSG_MEMORY_TYPE
-TIPO DE MEM”RIA
+TIPO DE MEM√ìRIA
 ;
 MSG_PRIORITY
 PRIORIDADE
@@ -176,7 +176,7 @@ MSG_UPPER_BOUND
 LIMITE SUPERIOR
 ;
 MSG_FIRST_ADDRESS
-PRIMEIRO ENDERE«O
+PRIMEIRO ENDERE√áO
 ;
 MSG_AMOUNT_FREE
 QUANTIDADE LIVRE
@@ -185,25 +185,25 @@ MSG_LARGEST_BLOCK
 MAIOR BLOCO
 ;
 MSG_NUM_CHUNKS
-N⁄MERO DE BLOCOS
+N√öMERO DE BLOCOS
 ;
 MSG_NODE_NAME
-NOME DO N”
+NOME DO N√ì
 ;
 MSG_MEMORY_SPEED
-VELOCIDADE DA MEM”RIA
+VELOCIDADE DA MEM√ìRIA
 ;
 MSG_DISK_ERRORS
-N⁄MERO DE ERROS DE DISCO
+N√öMERO DE ERROS DE DISCO
 ;
 MSG_UNIT_NUMBER
-N⁄MERO DE UNIDADE
+N√öMERO DE UNIDADE
 ;
 MSG_DISK_STATE
 ESTADO DO DISCO
 ;
 MSG_TOTAL_BLOCKS
-N⁄MERO TOTAL DE BLOCOS
+N√öMERO TOTAL DE BLOCOS
 ;
 MSG_BLOCKS_USED
 TOTAL DE BLOCOS UTILIZADOS
@@ -221,7 +221,7 @@ MSG_DEVICE_NAME
 NOME DO DISPOSITIVO
 ;
 MSG_SURFACES
-SUPERFÕCIES
+SUPERF√çCIES
 ;
 MSG_SECTORS_PER_SIDE
 SECTORES POR LADO
@@ -236,7 +236,7 @@ MSG_HIGHEST_CYLINDER
 CILINDRO MAIS ALTO
 ;
 MSG_NUM_BUFFERS
-N⁄MERO DE BUFFERS
+N√öMERO DE BUFFERS
 ;
 MSG_SPEED
 VELOCIDADE DA UNIDADE
@@ -251,7 +251,7 @@ MSG_DISK_NO_DISK_INSERTED
 Sem Disco Inserido
 ;
 MSG_BOARD_ADDRESS
-EndereÁo da Placa
+Endere√ßo da Placa
 ;
 MSG_BOARD_SIZE
 Tamanho da Placa
@@ -266,16 +266,16 @@ MSG_MANUFACTURER
 Fabricante
 ;
 MSG_SERIAL_NO
-N∫ de SÈrie
+N¬∫ de S√©rie
 ;
 MSG_BOARDS_NO_BOARDS_FOUND
-Nenhuma placa de expans„o encontrada
+Nenhuma placa de expans√£o encontrada
 ;
 MSG_BTN_QUIT
 SAIR
 ;
 MSG_BTN_MEMORY
-MEM”RIA
+MEM√ìRIA
 ;
 MSG_BTN_DRIVES
 UNIDADES
@@ -323,7 +323,7 @@ MSG_YES
 SIM
 ;
 MSG_NO
-N√O
+N√ÉO
 ;
 MSG_ON
 LIGADO
@@ -335,10 +335,10 @@ MSG_IN_USE
 EM USO
 ;
 MSG_CLOCK_FOUND
-REL”GIO ENCONTRADO
+REL√ìGIO ENCONTRADO
 ;
 MSG_CLOCK_NOT_FOUND
-N√O ENCONTRADO
+N√ÉO ENCONTRADO
 ;
 MSG_DISK_OK
 Disco OK, Leitura/Escrita
@@ -458,25 +458,25 @@ MSG_OFS
 Sistema de Ficheiros Antigo
 ;
 MSG_FFS
-Sistema de Ficheiros R·pido
+Sistema de Ficheiros R√°pido
 ;
 MSG_INTL_OFS
 SFA Antigo Internacional
 ;
 MSG_INTL_FFS
-SFA R·pido Internacional
+SFA R√°pido Internacional
 ;
 MSG_DCACHE_OFS
 SFA Antigo DC
 ;
 MSG_DCACHE_FFS
-SFA R·pido DC
+SFA R√°pido DC
 ;
 MSG_LNFS_OFS
 SFA Antigo LNFS
 ;
 MSG_LNFS_FFS
-SFA R·pido LNFS
+SFA R√°pido LNFS
 ;
 MSG_SFS
 Sistema de Ficheiros Inteligente
@@ -494,16 +494,16 @@ MSG_MEASURING_SPEED
 A medir velocidade
 ;
 MSG_ERR_NO_IDENTIFY
-N„o foi possÌvel abrir identify.library v13+
+N√£o foi poss√≠vel abrir identify.library v13+
 ;
 MSG_ERR_NO_MEMORY
-MemÛria insuficiente
+Mem√≥ria insuficiente
 ;
 MSG_ERR_NO_SCREEN
-N„o foi possÌvel abrir o ecr„
+N√£o foi poss√≠vel abrir o ecr√£
 ;
 MSG_ERR_NO_WINDOW
-N„o foi possÌvel abrir a janela
+N√£o foi poss√≠vel abrir a janela
 ;
 MSG_COMMENT_WARP11
 WARP 11!
@@ -512,22 +512,22 @@ MSG_COMMENT_LUDICROUS
 Velocidade absurda!
 ;
 MSG_COMMENT_RIDICULUS
-Velocidade ridÌcula!
+Velocidade rid√≠cula!
 ;
 MSG_COMMENT_BLAZING
-Incrivelmente r·pido!
+Incrivelmente r√°pido!
 ;
 MSG_COMMENT_VERY_FAST
-Muito r·pido!
+Muito r√°pido!
 ;
 MSG_COMMENT_FAST
-Sistema r·pido
+Sistema r√°pido
 ;
 MSG_COMMENT_GOOD
 Boa velocidade
 ;
 MSG_COMMENT_CLASSIC
-Amiga cl·ssico
+Amiga cl√°ssico
 ;
 MSG_COMMENT_DEFAULT
 O que posso dizer!
@@ -548,7 +548,7 @@ MSG_SDMAC_REV
 Chip SCSI
 ;
 MSG_RAMSEY_PAGE
-Modo de p·gina
+Modo de p√°gina
 ;
 MSG_RAMSEY_BURST
 Burst
@@ -587,13 +587,13 @@ MSG_GARY_UNKNOWN
 DESCONHECIDO
 ;
 MSG_EXT_INFO
-InformaÁ„o adicional para A3000/4000
+Informa√ß√£o adicional para A3000/4000
 ;
 MSG_NV_RAM
 NV-RAM (BattMem):
 ;
 MSG_AMNESIA
-AmnÈsia
+Amn√©sia
 ;
 MSG_SHARED_AMNESIA
 Amn. partilhada
@@ -605,10 +605,10 @@ MSG_SCAN_LUN
 Pesquisar LUNs
 ;
 MSG_SYNC_TRANS
-SÌncrono
+S√≠ncrono
 ;
 MSG_FAST_SYNC
-Sync R·pido
+Sync R√°pido
 ;
 MSG_QUEUING
 Fila de espera
@@ -647,7 +647,7 @@ MSG_PAULA_ORIG
 Paula 8364
 ;
 MSG_PAULA_SAGA
-SAGA Paula
+SAGA Arne
 ;
 MSG_DENISE_OCS
 Denise 8362 (OCS)
@@ -710,25 +710,25 @@ MSG_UNCERTAIN
 incerto
 ;
 MSG_MMU_SIZE
-Tamanho de p·gina MMU
+Tamanho de p√°gina MMU
 ;
 MSG_MMU_ADDRESS_HINT
-EndereÁos em hexadecimal!
+Endere√ßos em hexadecimal!
 ;
 MSG_MMU_FLAGS1_HINT
 WP=Prot.Escrita U=Usado M=Modificado G=Global
 ;
 MSG_MMU_FLAGS2_HINT
-TT=Traduzido UPx=P·gina-UtilX CI=InibCache
+TT=Traduzido UPx=P√°gina-UtilX CI=InibCache
 ;
 MSG_MMU_FLAGS3_HINT
-IM=Impreciso NS=n„o-serie CB=CopyBack
+IM=Impreciso NS=n√£o-serie CB=CopyBack
 ;
 MSG_MMU_FLAGS4_HINT
-SO=Supervisor BL=Vazio SH=Partilhado INV=Inv·lido
+SO=Supervisor BL=Vazio SH=Partilhado INV=Inv√°lido
 ;
 MSG_MMU_FLAGS5_HINT
-SNG=P·gina ⁄nica RP=Repar·vel IO=EspaÁoIO
+SNG=P√°gina √önica RP=Repar√°vel IO=Espa√ßoIO
 ;
 MSG_MMU_FLAGS6_HINT
 Ux=UtilX SW=Trocado MAP=Remapeado BN=Agrupado
