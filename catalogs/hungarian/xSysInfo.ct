@@ -2,13 +2,13 @@
 ## language magyar
 ## codeset 5
 ;
-; Magyar fordÌt·s az xSysInfo programhoz
-; FordÌtotta: Berda Jenˆ (big4billy@gmail.com)
+; Magyar ford√≠t√°s az xSysInfo programhoz
+; Ford√≠totta: Berda Jen√∂ (big4billy@gmail.com)
 ;
 ; Header strings
 ;
 MSG_TAGLINE
-egy Amiga rendszerinform·ciÛs program
+egy Amiga rendszerinform√°ci√≥s program
 ;
 MSG_CONTACT_LABEL
 Kapcsolat:
@@ -16,36 +16,36 @@ Kapcsolat:
 ; Section headers
 ;
 MSG_SYSTEM_SOFTWARE
-TELEPÕTETT RENDSZERSZOFTVER
+TELEP√çTETT RENDSZERSZOFTVER
 ;
 MSG_INTERNAL_HARDWARE
-HARDVER INFORM¡CI”K
+HARDVER INFORM√ÅCI√ìK
 ;
 MSG_SPEED_COMPARISONS
-SEBESS…G ÷SSZEHASONLÕT¡SOK
+SEBESS√âG √ñSSZEHASONL√çT√ÅSOK
 ;
 MSG_MEMORY_INFO
-MEM”RIA INFORM¡CI”K
+MEM√ìRIA INFORM√ÅCI√ìK
 ;
 MSG_BOARDS_INFO
-AUTOCONFIG B÷VÕT÷K¡RTY¡K
+AUTOCONFIG B√ñV√çT√ñK√ÅRTY√ÅK
 ;
 MSG_DRIVES_INFO
-MEGHAJT” INFORM¡CI”K
+MEGHAJT√ì INFORM√ÅCI√ìK
 ;
 MSG_SCSI_INFO
-SCSI ESZK÷Z INFORM¡CI”K
+SCSI ESZK√ñZ INFORM√ÅCI√ìK
 ;
 ; Software type cycle
 ;
 MSG_LIBRARIES
-K÷NYVT¡R
+K√ñNYVT√ÅR
 ;
 MSG_DEVICES
-ESZK÷Z
+ESZK√ñZ
 ;
 MSG_RESOURCES
-ER÷FORR¡S
+ER√ñFORR√ÅS
 ;
 MSG_MMU_ENTRIES
 MMU SCAN
@@ -61,16 +61,16 @@ BECSUK
 ; Hardware labels
 ;
 MSG_CLOCK
-”ra
+√ìra
 ;
 MSG_DMA_GFX
 DMA/Gfx
 ;
 MSG_MODE
-MÛd
+M√≥d
 ;
 MSG_DISPLAY
-Kijelzˆ
+Kijelz√∂
 ;
 MSG_CPU_MHZ
 CPU/MHz
@@ -91,7 +91,7 @@ MSG_COMMENT
 Megjegyz.
 ;
 MSG_HORIZ_KHZ
-VÌzsz. KHz
+V√≠zsz. KHz
 ;
 MSG_ECLOCK_HZ
 EClock Hz
@@ -103,13 +103,13 @@ MSG_GARY_REV
 Gary rev
 ;
 MSG_CARD_SLOT
-BusztÌpus
+Buszt√≠pus
 ;
 MSG_VERT_HZ
-F¸gg. Hz
+F√ºgg. Hz
 ;
 MSG_SUPPLY_HZ
-H·lÛzat Hz
+H√°l√≥zat Hz
 ;
 ; Cache labels
 ;
@@ -171,96 +171,96 @@ Te
 ; Memory view labels
 ;
 MSG_START_ADDRESS
-KEZD÷CÕM
+KEZD√ñC√çM
 ;
 MSG_END_ADDRESS
-V…GCÕM
+V√âGC√çM
 ;
 MSG_TOTAL_SIZE
-TELJES M…RET
+TELJES M√âRET
 ;
 MSG_MEMORY_TYPE
-MEM”RIATÕPUS
+MEM√ìRIAT√çPUS
 ;
 MSG_PRIORITY
-PRIORIT¡S
+PRIORIT√ÅS
 ;
 MSG_LOWER_BOUND
-ALS” HAT¡R
+ALS√ì HAT√ÅR
 ;
 MSG_UPPER_BOUND
-FELS÷ HAT¡R
+FELS√ñ HAT√ÅR
 ;
 MSG_FIRST_ADDRESS
-ELS÷ CIM
+ELS√ñ CIM
 ;
 MSG_AMOUNT_FREE
-SZABAD MEM”RIA
+SZABAD MEM√ìRIA
 ;
 MSG_LARGEST_BLOCK
 LEGNAGYOBB BLOKK
 ;
 MSG_NUM_CHUNKS
-BLOKKSZ¡M
+BLOKKSZ√ÅM
 ;
 MSG_NODE_NAME
-CSOM”PONTN…V
+CSOM√ìPONTN√âV
 ;
 MSG_MEMORY_SPEED
-MEM”RIA SEBESS…G
+MEM√ìRIA SEBESS√âG
 ;
 ; Drives view labels
 ;
 MSG_DISK_ERRORS
-LEMEZHIB¡K SZ¡MA
+LEMEZHIB√ÅK SZ√ÅMA
 ;
 MSG_UNIT_NUMBER
-EGYS…G SZ¡MA
+EGYS√âG SZ√ÅMA
 ;
 MSG_DISK_STATE
-LEMEZ¡LLAPOT
+LEMEZ√ÅLLAPOT
 ;
 MSG_TOTAL_BLOCKS
-BLOKKOK ÷SSZESEN
+BLOKKOK √ñSSZESEN
 ;
 MSG_BLOCKS_USED
-HASZN¡LT BLOKKOK
+HASZN√ÅLT BLOKKOK
 ;
 MSG_BYTES_PER_BLOCK
-B¡JTOK BLOKKONK…NT
+B√ÅJTOK BLOKKONK√âNT
 ;
 MSG_DISK_TYPE
-MEGHAJT”TÕPUS
+MEGHAJT√ìT√çPUS
 ;
 MSG_VOLUME_NAME
-K÷TETN…V
+K√ñTETN√âV
 ;
 MSG_DEVICE_NAME
-ESZK÷ZN…V
+ESZK√ñZN√âV
 ;
 MSG_SURFACES
-FEL‹LETEK
+FEL√úLETEK
 ;
 MSG_SECTORS_PER_SIDE
-SZEKTOROK OLDALANK…NT
+SZEKTOROK OLDALANK√âNT
 ;
 MSG_RESERVED_BLOCKS
 FENNTARTOTT BLOKKOK
 ;
 MSG_LOWEST_CYLINDER
-ALS” CILINDER
+ALS√ì CILINDER
 ;
 MSG_HIGHEST_CYLINDER
-FELS÷ CILINDER
+FELS√ñ CILINDER
 ;
 MSG_NUM_BUFFERS
-PUFFEREK SZ¡MA
+PUFFEREK SZ√ÅMA
 ;
 MSG_SPEED
-MEGHAJT” SEBESS…GE
+MEGHAJT√ì SEBESS√âGE
 ;
 MSG_DRIVES_NO_DRIVES_FOUND
-Nem tal·lhatÛk meghajtÛk.
+Nem tal√°lhat√≥k meghajt√≥k.
 ;
 MSG_DASH_PLACEHOLDER
 ---
@@ -271,39 +271,39 @@ Nincs lemez behelyezve
 ; Boards view labels
 ;
 MSG_BOARD_ADDRESS
-K·rtyacÌm
+K√°rtyac√≠m
 ;
 MSG_BOARD_SIZE
-MÈret
+M√©ret
 ;
 MSG_BOARD_TYPE
-K·rtyatÌp.
+K√°rtyat√≠p.
 ;
 MSG_PRODUCT
-Gy·rtm·ny
+Gy√°rtm√°ny
 ;
 MSG_MANUFACTURER
-Gy·rtÛ
+Gy√°rt√≥
 ;
 MSG_SERIAL_NO
-Sorozatsz·m
+Sorozatsz√°m
 ;
 MSG_BOARDS_NO_BOARDS_FOUND
-Nem tal·lhatÛk bˆvÌtˆk·rty·k
+Nem tal√°lhat√≥k b√∂v√≠t√∂k√°rty√°k
 ;
 ; Button labels
 ;
 MSG_BTN_QUIT
-KIL…P
+KIL√âP
 ;
 MSG_BTN_MEMORY
-MEM”RIA
+MEM√ìRIA
 ;
 MSG_BTN_DRIVES
 MEGHAJT
 ;
 MSG_BTN_BOARDS
-K¡RTY¡K
+K√ÅRTY√ÅK
 ;
 MSG_BTN_SPEED
 SEBESS
@@ -312,22 +312,22 @@ MSG_BTN_PRINT
 NYOMTAT
 ;
 MSG_BTN_PREV
-EL÷Z÷
+EL√ñZ√ñ
 ;
 MSG_BTN_NEXT
-K÷VETK
+K√ñVETK
 ;
 MSG_BTN_EXIT
-KIL…P
+KIL√âP
 ;
 MSG_BTN_SCSI
 SCSI
 ;
 MSG_BTN_OK
-OK…
+OK√â
 ;
 MSG_BTN_CANCEL
-M…GSEM
+M√âGSEM
 ;
 MSG_BTN_ALL
 MIND
@@ -356,19 +356,19 @@ MSG_OFF
 KI
 ;
 MSG_IN_USE
-HASZN¡LATBAN
+HASZN√ÅLATBAN
 ;
 MSG_CLOCK_FOUND
-”RAJEL TAL¡LHAT”
+√ìRAJEL TAL√ÅLHAT√ì
 ;
 MSG_CLOCK_NOT_FOUND
-NEM TAL¡LHAT”
+NEM TAL√ÅLHAT√ì
 ;
 MSG_DISK_OK
-Lemez rendben, olvas/Ìr
+Lemez rendben, olvas/√≠r
 ;
 MSG_DISK_WRITE_PROTECTED
-Lemez rendben, Ìr·svÈdett
+Lemez rendben, √≠r√°sv√©dett
 ;
 MSG_DISK_NO_DISK
 Nincs lemez
@@ -424,7 +424,7 @@ MSG_SCSI_TYPE_TAPE
 SZALAG
 ;
 MSG_SCSI_TYPE_PRINTER
-NYOMTAT”
+NYOMTAT√ì
 ;
 MSG_SCSI_TYPE_PROCESSOR
 PROCESSZOR
@@ -436,13 +436,13 @@ MSG_SCSI_TYPE_CDROM
 CD
 ;
 MSG_SCSI_TYPE_SCANNER
-LAPOLVAS”
+LAPOLVAS√ì
 ;
 MSG_SCSI_TYPE_OPTICAL
 OPTIKAI
 ;
 MSG_SCSI_TYPE_CHANGER
-CDT¡R
+CDT√ÅR
 ;
 MSG_SCSI_TYPE_COMM
 KOMM
@@ -464,10 +464,10 @@ MSG_SCSI_ID
 ID
 ;
 MSG_SCSI_TYPE
-TÌpus
+T√≠pus
 ;
 MSG_SCSI_MANUF
-Gy·rtÛ
+Gy√°rt√≥
 ;
 MSG_SCSI_MODEL
 Modell
@@ -488,7 +488,7 @@ MSG_SCSI_FORMAT
 Format
 ;
 MSG_SCSI_NO_DEVICES
-Nem tal·lhatÛk SCSI eszkˆzˆk
+Nem tal√°lhat√≥k SCSI eszk√∂z√∂k
 ;
 ; Filesystem types
 ;
@@ -523,29 +523,29 @@ MSG_PFS
 Professional File System
 ;
 MSG_UNKNOWN_FS
-Ismeretlen f·jlrendszer
+Ismeretlen f√°jlrendszer
 ;
 ; Requester dialogs
 ;
 MSG_ENTER_FILENAME
-F·jlnÈv megad·sa vagy RETURN
+F√°jln√©v megad√°sa vagy RETURN
 ;
 MSG_MEASURING_SPEED
-SebessÈgmÈrÈs
+Sebess√©gm√©r√©s
 ;
 ; Error messages
 ;
 MSG_ERR_NO_IDENTIFY
-Nem siker¸lt megnyitni: identify.library v13+
+Nem siker√ºlt megnyitni: identify.library v13+
 ;
 MSG_ERR_NO_MEMORY
-KevÈs a memÛria
+Kev√©s a mem√≥ria
 ;
 MSG_ERR_NO_SCREEN
-A kÈpernyˆt nem siker¸lt megnyitni
+A k√©perny√∂t nem siker√ºlt megnyitni
 ;
 MSG_ERR_NO_WINDOW
-Az ablakot nem siker¸lt megnyitni
+Az ablakot nem siker√ºlt megnyitni
 ;
 ; Comments based on system speed
 ;
@@ -553,13 +553,13 @@ MSG_COMMENT_WARP11
 WARP 11!
 ;
 MSG_COMMENT_LUDICROUS
-NevetsÈges sebessÈg!
+Nevets√©ges sebess√©g!
 ;
 MSG_COMMENT_RIDICULUS
-Vicces sebessÈg!
+Vicces sebess√©g!
 ;
 MSG_COMMENT_BLAZING
-Vill·mgyors!
+Vill√°mgyors!
 ;
 MSG_COMMENT_VERY_FAST
 Nagyon gyors!
@@ -568,18 +568,18 @@ MSG_COMMENT_FAST
 Gyors rendszer
 ;
 MSG_COMMENT_GOOD
-JÛ sebessÈg
+J√≥ sebess√©g
 ;
 MSG_COMMENT_CLASSIC
 Klasszikus Amiga
 ;
 MSG_COMMENT_DEFAULT
-Mit is mondhatnÈk!
+Mit is mondhatn√©k!
 ;
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD
-¡TTEK
+√ÅTTEK
 ;
 MSG_HARDWARE_CPU
 CPU
@@ -594,7 +594,7 @@ MSG_SDMAC_REV
 SCSI chip
 ;
 MSG_RAMSEY_PAGE
-Lapoz·s
+Lapoz√°s
 ;
 MSG_RAMSEY_BURST
 Burst
@@ -603,7 +603,7 @@ MSG_RAMSEY_WRAP
 Wrap
 ;
 MSG_RAMSEY_SIZE
-Ram-mÈret
+Ram-m√©ret
 ;
 MSG_RAMSEY_SKIP
 Skip
@@ -633,7 +633,7 @@ MSG_GARY_UNKNOWN
 ISMERETLEN
 ;
 MSG_EXT_INFO
-Tov·bbi info A3000/4000-hez
+Tov√°bbi info A3000/4000-hez
 ;
 MSG_NV_RAM
 NV-RAM (BattMem):
@@ -645,7 +645,7 @@ MSG_SHARED_AMNESIA
 Megoszt. amn.
 ;
 MSG_TIMEOUT
-Idˆkorl·t
+Id√∂korl√°t
 ;
 MSG_SCAN_LUN
 LUN szkennel.
@@ -657,16 +657,16 @@ MSG_FAST_SYNC
 Gyors Sync
 ;
 MSG_QUEUING
-Sorban·ll·s
+Sorban√°ll√°s
 ;
 MSG_SCSI_HOST_ID
 SCSI_ID
 ;
 MSG_LONG
-HOSSZ⁄
+HOSSZ√ö
 ;
 MSG_SHORT
-R÷VID
+R√ñVID
 ;
 MSG_NCR_53C710
 NCR 53C710
@@ -693,7 +693,7 @@ MSG_PAULA_ORIG
 Paula 8364
 ;
 MSG_PAULA_SAGA
-SAGA Paula
+SAGA Arne
 ;
 MSG_DENISE_OCS
 Denise 8362 (OCS)
@@ -756,31 +756,31 @@ MSG_UNCERTAIN
 bizonytalan
 ;
 MSG_MMU_SIZE
-MMU lapmÈret
+MMU lapm√©ret
 ;
 MSG_MMU_ADDRESS_HINT
-Hexadecim·lis cÌmek!
+Hexadecim√°lis c√≠mek!
 ;
 MSG_MMU_FLAGS1_HINT
-WP=Ir·svÈdett U=Haszn·lt M=MÛdosÌtott G=Glob·lis
+WP=Ir√°sv√©dett U=Haszn√°lt M=M√≥dos√≠tott G=Glob√°lis
 ;
 MSG_MMU_FLAGS2_HINT
-TT=FordÌtott UPx=User-pageX CI=CacheInhibit
+TT=Ford√≠tott UPx=User-pageX CI=CacheInhibit
 ;
 MSG_MMU_FLAGS3_HINT
 IM=Pontatlan NS=nem-soros CB=CopyBack
 ;
 MSG_MMU_FLAGS4_HINT
-SO=Supervisor BL=‹res SH=Megoszt. INV=…rvÈnyt.
+SO=Supervisor BL=√úres SH=Megoszt. INV=√ârv√©nyt.
 ;
 MSG_MMU_FLAGS5_HINT
-SNG=Egyetlen lap RP=JavÌthatÛ IO=IO-ter¸let
+SNG=Egyetlen lap RP=Jav√≠that√≥ IO=IO-ter√ºlet
 ;
 MSG_MMU_FLAGS6_HINT
-Ux=UserX SW=CserÈlt MAP=¡thelyezett BN=Kˆtegelt
+Ux=UserX SW=Cser√©lt MAP=√Åthelyezett BN=K√∂tegelt
 ;
 MSG_MMU_FLAGS7_HINT
-IND=Kˆzvetett +=tˆbb jelzˆ
+IND=K√∂zvetett +=t√∂bb jelz√∂
 ;
 MSG_SLOT_ZORRO
 ZORRO
