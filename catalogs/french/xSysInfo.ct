@@ -1,5 +1,5 @@
 ## version $VER: xSysInfo.catalog 1.0 (17.12.2024)
-## language français
+## language franÃ§ais
 ## codeset 4
 ;
 ; French translation for xSysInfo
@@ -579,7 +579,7 @@ Que dire!
 ; Hardware toggle
 ;
 MSG_HARDWARE_STD
-APERÇU
+APERÃ‡U
 ;
 MSG_HARDWARE_CPU
 CPU
@@ -693,7 +693,7 @@ MSG_PAULA_ORIG
 Paula 8364
 ;
 MSG_PAULA_SAGA
-SAGA Paula
+SAGA Arne
 ;
 MSG_DENISE_OCS
 Denise 8362 (OCS)
