@@ -67,7 +67,7 @@ MSG_DMA_GFX
 DMA/Gfx
 ;
 MSG_MODE
-Modalit‡
+Modalit√†
 ;
 MSG_DISPLAY
 Visualizzazione
@@ -260,7 +260,7 @@ MSG_SPEED
 VELOCITA' UNITA'
 ;
 MSG_DRIVES_NO_DRIVES_FOUND
-Nessuna unit‡ trovata.
+Nessuna unit√† trovata.
 ;
 MSG_DASH_PLACEHOLDER
 ---
@@ -531,7 +531,7 @@ MSG_ENTER_FILENAME
 Inserisci nome file o INVIO
 ;
 MSG_MEASURING_SPEED
-Misurazione della velocit‡
+Misurazione della velocit√†
 ;
 ; Error messages
 ;
@@ -553,10 +553,10 @@ MSG_COMMENT_WARP11
 WARP 11!
 ;
 MSG_COMMENT_LUDICROUS
-Velocit‡ assurda!
+Velocit√† assurda!
 ;
 MSG_COMMENT_RIDICULUS
-Velocit‡ ridicola!
+Velocit√† ridicola!
 ;
 MSG_COMMENT_BLAZING
 Incredibilmente veloce!
@@ -568,7 +568,7 @@ MSG_COMMENT_FAST
 Sistema veloce
 ;
 MSG_COMMENT_GOOD
-Buona velocit‡
+Buona velocit√†
 ;
 MSG_COMMENT_CLASSIC
 Amiga classico
@@ -594,7 +594,7 @@ MSG_SDMAC_REV
 Chip SCSI
 ;
 MSG_RAMSEY_PAGE
-Modalit‡ pagina
+Modalit√† pagina
 ;
 MSG_RAMSEY_BURST
 Burst
@@ -693,7 +693,7 @@ MSG_PAULA_ORIG
 Paula 8364
 ;
 MSG_PAULA_SAGA
-SAGA Paula
+SAGA Arne
 ;
 MSG_DENISE_OCS
 Denise 8362 (OCS)
